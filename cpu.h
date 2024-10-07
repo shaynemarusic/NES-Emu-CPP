@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <fstream>
 
 //This class represents the CPU (duh). The NES used the Ricoh 2AO3 which was a slightly modified MOS 6502
 class CPU {
@@ -28,6 +29,8 @@ class CPU {
         int8_t xReg;
         //Like the X register but cannot affect the stack pointer
         int8_t yReg;
+        //This may or may not be necessary
+        std::fstream romFile;
 
         //Memory
         /*The 6502 had a 64KB memory
@@ -41,6 +44,12 @@ class CPU {
             PRG-ROM - 0x08000 to 0x0FFFF. This is program ROM. It is divided into two banks: 0x08000 to 0x0BFFF and 0x0C000 to 0x0FFFF.
             How these banks are utilized is dependent on the size of the game
         */
-        int8_t *memory [65536];
+        std::unique_ptr<int8_t[]> memory;
+
+    public:
+        CPU(const char * filename);
+        //Destructor may or may not be needed. Depends on implementation details yet to be ironed out
+        //~CPU();
+        void decode();
 
 };
