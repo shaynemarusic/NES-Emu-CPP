@@ -295,6 +295,189 @@ void CPU::decode() {
         //STA abs, X
         case 0x9D:
             break;
-
+        //LDY #
+        case 0xA0:
+            break;
+        //LDA X, ind
+        case 0xA1:
+            break;
+        //LDX #
+        case 0xA2:
+            break;
+        //LDY zpg
+        case 0xA4:
+            break;
+        //LDA zpg
+        case 0xA5:
+            break;
+        //LDX zpg
+        case 0xA6:
+            break;
+        //TAY impl
+        case 0xA8:
+            break;
+        //LDA #
+        case 0xA9:
+            break;
+        //TAX impl
+        case 0xAA:
+            break;
+        //LDY abs
+        case 0xAC:
+            break;
+        //LDA abs
+        case 0xAD:
+            break;
+        //LDX abs
+        case 0xAE:
+            break;
+        //BCS rel
+        case 0xB0:
+            break;
+        //LDA ind, Y
+        case 0xB1:
+            break;
+        //LDY zpg, X
+        case 0xB4:
+            break;
+        //LDA zpg, X
+        case 0xB5:
+            break;
+        //LDX zpg, Y
+        case 0xB6:
+            break;
+        //CLV impl
+        case 0xB8:
+            break;
+        //LDA abs, Y
+        case 0xB9:
+            break;
+        //TSX impl
+        case 0xBA:
+            break;
+        //LDY abs, X
+        case 0xBC:
+            break;
+        //LDA abs, X
+        case 0xBD:
+            break;
+        //LDX abs, Y
+        case 0xBE:
+            break;
+        //CPY #
+        case 0xC0:
+            break;
+        //CMP X, ind
+        case 0xC1:
+            break;
+        //CPY zpg
+        case 0xC4:
+            break;
+        //CMP zpg
+        case 0xC5:
+            break;
+        //DEC zpg
+        case 0xC6:
+            break;
+        //INY impl
+        case 0xC8:
+            break;
+        //CMP #
+        case 0xC9:
+            break;
+        //DEX impl
+        case 0xCA:
+            break;
+        //CPY abs
+        case 0xCC:
+            break;
+        //CMP abs
+        case 0xCD:
+            break;
+        //DEC abs
+        case 0xCE:
+            break;
+        //BNE rel
+        case 0xD0:
+            break;
+        //CMP ind, Y
+        case 0xD1:
+            break;
+        //CMP zpg, X
+        case 0xD5:
+            break;
+        //DEC zpg, X
+        case 0xD6:
+            break;
+        //CLD impl
+        case 0xD8:
+            break;
+        //CMP abs, Y
+        case 0xD9:
+            break;
+        //CMP abs, X
+        case 0xDD:
+            break;
+        //DEC abs, X
+        case 0xDE:
+            break;
+        //CPX #
+        case 0xE0:
+            break;
+        //SBC X, ind
+        case 0xE1:
+            break;
+        //CPX zpg
+        case 0xE4:
+            break;
+        //SBC zpg
+        case 0xE5:
+            break;
+        //INC zpg
+        case 0xE6:
+            break;
+        //INX impl
+        case 0xE8:
+            break;
+        //SBC #
+        case 0xE9:
+            break;
+        //NOP impl
+        case 0xEA:
+            break;
+        //CPX abs
+        case 0xEC:
+            break;
+        //SBC abs
+        case 0xED:
+            break;
+        //INC abs
+        case 0xEE:
+            break;
+        //BEQ rel
+        case 0xF0:
+            break;
+        //SBC ind, Y
+        case 0xF1:
+            break;
+        //SBC zpg, X
+        case 0xF5:
+            break;
+        //INC zpg, X
+        case 0xF6:
+            break;
+        //SED impl
+        case 0xF8:
+            break;
+        //SBC abs, Y
+        case 0xF9:
+            break;
+        //SBC abs, X
+        case 0xFD:
+            break;
+        //INC abs, X
+        case 0xFE:
+            break;
+        
     }
 }
