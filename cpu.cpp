@@ -23,6 +23,25 @@ void CPU::decode() {
     programCounter++;
 
     //Switch over the low order nibble
+    /*Operands indicate addressing mode. Note that 6502 is little endian so addresses are stored in memory least significant byte first
+    The first byte of every instruction is the opcode
+    Addressing modes are as follows:
+    A - Accumulator, 1 byte instruction, instruction operates on accumulator
+    abs - Absolute, 3 byte instruction where the address of the data is formed by the last 2 bytes
+    abs, X/Y - Absolute Indexed, 3 byte instruction where the address is incremented by X/Y with carry
+    # - Immediate, 2 byte instruction where the last byte is the operand (this operand does not represent an address)
+    impl - Implied, 1 byte instruction where the operand is implied
+    ind - Indirect, 3 byte instruction where the operand is an address pointing to another address
+    X, ind - Indexed Indirect/X-indexed Indirect, 2 byte instruction where the operand is found by adding the byte with contents of X,
+    &ing the result with 0xFF, and then using the data at that address as an address
+    ind, Y - Indirect Indexed/Indirect Y-indexed, 2 byte instruction where the operand is found by using the byte as an address, adding Y
+    to the address the byte points to, and using the result as an address (ex, $10, Y where Y = $5 and the data at $10 is $4013, uses the
+    address $4018)
+    rel - Relative, 2 byte instruction, used only for branch instructions, the byte is interpretted as signed and is the offset if the branch
+    is taken
+    zpg - Zero Page, 2 byte instruction where the byte is an address in the range 0x00 - 0xFF
+    zpg, X/Y - Zero Page Indexed, 2 byte instruction where the byte is added with X/Y, &ed with 0xFF, and used as an address
+    */
     switch (opcode) {
 
         //BRK impl
