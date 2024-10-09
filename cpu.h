@@ -45,6 +45,11 @@ class CPU {
             How these banks are utilized is dependent on the size of the game
         */
         std::unique_ptr<int8_t[]> memory;
+        
+        void ORA(uint8_t address);
+        uint8_t Xind(uint8_t byte);
+        uint8_t indY(uint8_t byte);
+        uint8_t abs(uint8_t low, uint8_t high);
 
     public:
         CPU(const char * filename);

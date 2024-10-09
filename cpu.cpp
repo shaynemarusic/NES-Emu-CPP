@@ -1,14 +1,19 @@
 #include "cpu.h"
+#include <unordered_map>
+
+std::unordered_map<uint8_t, uint8_t> pcIncrement = {
+    {0x01, 2}, {0x05, 2}, {0x09, 2}, {0x0D, 3}, {0x11, 2}, {0x15, 2}, {0x19, 3}, {0x1D, 3}
+};
 
 //The main constructor
 CPU::CPU(const char * filename) {
 
     //Initialize memory
-    this->memory = std::unique_ptr<int8_t[]>(new int8_t[65536]);
+    memory = std::unique_ptr<int8_t[]>(new int8_t[65536]);
     std::fill_n(this->memory.get(), 65536, 0);
 
-    this->stackPointer = 0xFF;
-    this->programCounter = 0xFFFC;
+    stackPointer = 0xFF;
+    programCounter = 0xFFFC;
 
     //Open the rom file - worry about the details of this later
     //this->romFile.open(filename, std::ios::in | std::ios::binary | std::ios::ate);
@@ -18,9 +23,11 @@ CPU::CPU(const char * filename) {
 //Decodes and executes instructions
 void CPU::decode() {
 
-    uint8_t opcode;
-    opcode = this->memory[programCounter];
-    programCounter++;
+    uint8_t opcode, high, low;
+    opcode = memory[programCounter];
+    low = memory[programCounter + 1];
+    high = memory[programCounter + 2];
+    //programCounter++;
 
     //Switch over the low order nibble
     /*Operands indicate addressing mode. Note that 6502 is little endian so addresses are stored in memory least significant byte first
@@ -49,9 +56,11 @@ void CPU::decode() {
             break;
         //ORA X, ind
         case 0x01:
+            ORA(Xind(low));
             break;
         //ORA zpg
         case 0x05:
+            ORA(memory[low]);
             break;
         //ASL zpg
         case 0x06:
@@ -61,12 +70,14 @@ void CPU::decode() {
             break;
         //ORA #
         case 0x09:
+            ORA(low);
             break;
         //ASL A
         case 0x0A:
             break;
         //ORA abs
         case 0x0D:
+            ORA(abs(low, high));
             break;
         //ASL abs
         case 0x0E:
@@ -76,9 +87,11 @@ void CPU::decode() {
             break;
         //ORA ind, Y
         case 0x11:
+            ORA(indY(low));
             break;
         //ORA zpg, X
         case 0x15:
+            ORA(memory[(low + xReg) & 0xFF]);
             break;
         //ASL zpg, X
         case 0x16:
@@ -88,9 +101,11 @@ void CPU::decode() {
             break;
         //ORA abs, Y
         case 0x19:
+            ORA(memory[((((uint16_t) high) << 8) | low) + yReg]);
             break;
         //ORA abs, X
         case 0x1D:
+            ORA(memory[((((uint16_t) high) << 8) | low) + xReg]);
             break;
         //ASL abs, X
         case 0x1E:
@@ -497,6 +512,48 @@ void CPU::decode() {
         //INC abs, X
         case 0xFE:
             break;
+        default:
+            //Throw an exception - ADD LATER
         
+        programCounter += pcIncrement[opcode];
+
     }
+
+}
+
+//Addressing functions
+//Indirect Indexed
+uint8_t CPU::Xind(uint8_t byte) {
+
+    uint16_t exp = (byte + xReg) & 0xFF;
+    return memory[((uint16_t) memory[exp + 1] << 8) | memory[exp]];
+
+}
+
+//Indexed Indirect
+uint8_t CPU::indY(uint8_t byte) {
+
+    uint8_t low, high;
+    low = memory[byte];
+    high = memory[byte + 1];
+    uint16_t exp = (((uint16_t) high << 8) | low) + yReg;
+    return memory[exp];
+
+}
+
+//Absolute
+uint8_t CPU::abs(uint8_t low, uint8_t high) {
+
+    return memory[(((uint16_t) high) << 8) | low];
+
+}
+
+//Bitwise OR the contents at the address with the accumulator and set the accumulator to the result
+//Sets the sign and zero flags if applicable
+void CPU::ORA(uint8_t operand) {
+
+    accumulator = operand | accumulator;
+    statusRegister = accumulator;
+    statusRegister = statusRegister & 0x82;
+
 }
