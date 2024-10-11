@@ -18,6 +18,7 @@ class CPU {
         D: decimal mode flag, unused in the NES
         I: interrupt disbale flag, interrupts are ignored while this flag is set
         Z: zero flag, set if the result of the last instruction was 0
+        c: carry flag, set if the last instruction resulted in an overflow or underflow
         */
         uint8_t statusRegister;
         uint16_t programCounter;
@@ -45,11 +46,29 @@ class CPU {
             How these banks are utilized is dependent on the size of the game
         */
         std::unique_ptr<int8_t[]> memory;
-        
-        void ORA(uint8_t address);
+
+        //Instructions
+        void ORA(uint8_t operand);
+        void AND(uint8_t operand);
+        void ASL(uint16_t address);
+        void ASLA();
+
+        //Addressing modes
         uint8_t Xind(uint8_t byte);
         uint8_t indY(uint8_t byte);
         uint8_t abs(uint8_t low, uint8_t high);
+        uint8_t absX(uint8_t low, uint8_t high);
+        uint8_t absY(uint8_t low, uint8_t high);
+        uint8_t zpg(uint8_t low);
+        uint8_t zpgX(uint8_t low);
+
+        uint16_t XindAdd(uint8_t byte);
+        uint16_t indYAdd(uint8_t byte);
+        uint16_t absAdd(uint8_t low, uint8_t high);
+        uint16_t absXAdd(uint8_t low, uint8_t high);
+        uint16_t absYAdd(uint8_t low, uint8_t high);
+        uint16_t zpgAdd(uint8_t low);
+        uint16_t zpgXAdd(uint8_t low);
 
     public:
         CPU(const char * filename);

@@ -60,10 +60,11 @@ void CPU::decode() {
             break;
         //ORA zpg
         case 0x05:
-            ORA(memory[low]);
+            ORA(zpg(low));
             break;
         //ASL zpg
         case 0x06:
+            ASL(zpgAdd(low));
             break;
         //PHP impl
         case 0x08:
@@ -74,6 +75,7 @@ void CPU::decode() {
             break;
         //ASL A
         case 0x0A:
+            ASLA();
             break;
         //ORA abs
         case 0x0D:
@@ -81,6 +83,7 @@ void CPU::decode() {
             break;
         //ASL abs
         case 0x0E:
+            ASL(absAdd(low, high));
             break;
         //BPL rel
         case 0x10:
@@ -91,36 +94,40 @@ void CPU::decode() {
             break;
         //ORA zpg, X
         case 0x15:
-            ORA(memory[(low + xReg) & 0xFF]);
+            ORA(zpgX(low));
             break;
         //ASL zpg, X
         case 0x16:
+            ASL(zpgXAdd(low));
             break;
         //CLC impl
         case 0x18:
             break;
         //ORA abs, Y
         case 0x19:
-            ORA(memory[((((uint16_t) high) << 8) | low) + yReg]);
+            ORA(absY(low, high));
             break;
         //ORA abs, X
         case 0x1D:
-            ORA(memory[((((uint16_t) high) << 8) | low) + xReg]);
+            ORA(absX(low, high));
             break;
         //ASL abs, X
         case 0x1E:
+            ASL(absXAdd(low, high));
             break;
         //JSR abs
         case 0x20:
             break;
         //AND X, ind
         case 0x21:
+            AND(Xind(low));
             break;
         //BIT zpg
         case 0x24:
             break;
         //AND zpg
         case 0x25:
+            AND(zpg(low));
             break;
         //ROL zpg
         case 0x26:
@@ -130,6 +137,7 @@ void CPU::decode() {
             break;
         //AND #
         case 0x29:
+            AND(low);
             break;
         //ROL A
         case 0x2A:
@@ -139,6 +147,7 @@ void CPU::decode() {
             break;
         //AND abs
         case 0x2D:
+            AND(abs(low, high));
             break;
         //ROL abs
         case 0x2E:
@@ -148,9 +157,11 @@ void CPU::decode() {
             break;
         //AND ind, Y
         case 0x31:
+            AND(indY(low));
             break;
         //AND zpg, X
         case 0x35:
+            AND(zpgX(low));
             break;
         //ROL zpg, X
         case 0x36:
@@ -160,9 +171,11 @@ void CPU::decode() {
             break;
         //AND abs, Y
         case 0x39:
+            AND(absY(low, high));
             break;
         //AND abs, X
         case 0x3D:
+            AND(absX(low, high));
             break;
         //ROL abs, X
         case 0x3E:
@@ -521,39 +534,114 @@ void CPU::decode() {
 
 }
 
-//Addressing functions
+//Addressing functions - these ones return the operands at the address
 //Indirect Indexed
-uint8_t CPU::Xind(uint8_t byte) {
+uint8_t CPU::Xind(uint8_t low) {
 
-    uint16_t exp = (byte + xReg) & 0xFF;
+    uint16_t exp = (low + xReg) & 0xFF;
     return memory[((uint16_t) memory[exp + 1] << 8) | memory[exp]];
 
 }
 
 //Indexed Indirect
-uint8_t CPU::indY(uint8_t byte) {
+uint8_t CPU::indY(uint8_t low) {
 
-    uint8_t low, high;
-    low = memory[byte];
-    high = memory[byte + 1];
+    uint8_t high;
+    low = memory[low];
+    high = memory[low + 1];
     uint16_t exp = (((uint16_t) high << 8) | low) + yReg;
     return memory[exp];
 
 }
 
 //Absolute
-uint8_t CPU::abs(uint8_t low, uint8_t high) {
+uint8_t CPU::abs(uint8_t low, uint8_t high) { return memory[(((uint16_t) high) << 8) | low]; }
 
-    return memory[(((uint16_t) high) << 8) | low];
+//Absolute, X Indexed
+uint8_t CPU::absX(uint8_t low, uint8_t high) { return memory[((((uint16_t) high) << 8) | low) + xReg]; }
+
+//Absolute, Y Indexed
+uint8_t CPU::absY(uint8_t low, uint8_t high) { return memory[((((uint16_t) high) << 8) | low) + yReg]; }
+
+//Zero Page
+uint8_t CPU::zpg(uint8_t low) { return memory[low]; }
+
+//Zero Page, X Indexed
+uint8_t CPU::zpgX(uint8_t low) { return memory[(low + xReg) & 0xFF]; }
+
+//Addressing modes - these ones return the addresses themselves
+
+//Indirect Indexed
+uint16_t CPU::XindAdd(uint8_t low) {
+
+    uint16_t exp = (low + xReg) & 0xFF;
+    return ((uint16_t) memory[exp + 1] << 8) | memory[exp];
 
 }
 
-//Bitwise OR the contents at the address with the accumulator and set the accumulator to the result
+//Indexed Indirect
+uint16_t CPU::indYAdd(uint8_t low) {
+
+    uint8_t high;
+    low = memory[low];
+    high = memory[low + 1];
+    uint16_t exp = (((uint16_t) high << 8) | low) + yReg;
+    return exp;
+
+}
+
+//Absolute
+uint16_t CPU::absAdd(uint8_t low, uint8_t high) { return (((uint16_t) high) << 8) | low; }
+
+//Absolute, X Indexed
+uint16_t CPU::absXAdd(uint8_t low, uint8_t high) { return ((((uint16_t) high) << 8) | low) + xReg; }
+
+//Absolute, Y Indexed
+uint16_t CPU::absYAdd(uint8_t low, uint8_t high) { return ((((uint16_t) high) << 8) | low) + yReg; }
+
+//Zero Page
+uint16_t CPU::zpgAdd(uint8_t low) { return (uint16_t) low; }
+
+//Zero Page, X Indexed
+uint16_t CPU::zpgXAdd(uint8_t low) { return (low + xReg) & 0xFF; }
+
+//Instructions
+
+//Bitwise OR operand with the accumulator and set the accumulator to the result
 //Sets the sign and zero flags if applicable
 void CPU::ORA(uint8_t operand) {
 
     accumulator = operand | accumulator;
     statusRegister = accumulator;
     statusRegister = statusRegister & 0x82;
+
+}
+
+//Bitwise AND operand with accumulator and set the accumulator to the result
+//Sets the sign and zero flags if applicable
+void CPU::AND(uint8_t operand) {
+
+    accumulator = operand & accumulator;
+    statusRegister = accumulator;
+    statusRegister = statusRegister & 0x82;
+
+}
+
+//Arithmetic shift left the byte at the given address
+//Shift in a 0
+//Set the Zero and Sign bits if applicable
+//Set the carry flag to the value of the shifted out bit
+void CPU::ASL(uint16_t address) {
+
+    statusRegister = ((memory[address] << 1) & 0x82) | (memory[address] & 0x80 >> 7);
+    memory[address] = memory[address] << 1;
+
+}
+
+//The ASL instruction but with accumulator addressing (that is, it operates directly on the accumulator)
+void CPU::ASLA() {
+
+    statusRegister = ((accumulator << 1) & 0x82) | (accumulator & 0x80 >> 7);
+    accumulator = accumulator << 1;
 
 }
