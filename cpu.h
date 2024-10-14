@@ -52,6 +52,8 @@ class CPU {
         void AND(uint8_t operand);
         void ASL(uint16_t address);
         void ASLA();
+        void LSR(uint16_t address);
+        void LSRA();
 
         //Addressing modes
         uint8_t Xind(uint8_t byte);

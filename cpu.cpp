@@ -191,6 +191,7 @@ void CPU::decode() {
             break;
         //LSR zpg
         case 0x46:
+            LSR(zpgAdd(low));
             break;
         //PHA impl
         case 0x48:
@@ -200,6 +201,7 @@ void CPU::decode() {
             break;
         //LSR A
         case 0x4A:
+            LSRA();
             break;
         //JMP abs
         case 0x4C:
@@ -209,6 +211,7 @@ void CPU::decode() {
             break;
         //LSR abs
         case 0x4E:
+            LSR(absAdd(low, high));
             break;
         //BVC rel
         case 0x50:
@@ -221,6 +224,7 @@ void CPU::decode() {
             break;
         //LSR zpg, X
         case 0x56:
+            LSR(zpgXAdd(low));
             break;
         //CLI impl
         case 0x58:
@@ -233,6 +237,7 @@ void CPU::decode() {
             break;
         //LSR abs, X
         case 0x5E:
+            LSR(absXAdd(low, high));
             break;
         //RTS impl
         case 0x60:
@@ -612,8 +617,7 @@ uint16_t CPU::zpgXAdd(uint8_t low) { return (low + xReg) & 0xFF; }
 void CPU::ORA(uint8_t operand) {
 
     accumulator = operand | accumulator;
-    statusRegister = accumulator;
-    statusRegister = statusRegister & 0x82;
+    statusRegister = (accumulator & 0x80) | (accumulator == 0 ? 0x2 : 0);
 
 }
 
@@ -622,8 +626,7 @@ void CPU::ORA(uint8_t operand) {
 void CPU::AND(uint8_t operand) {
 
     accumulator = operand & accumulator;
-    statusRegister = accumulator;
-    statusRegister = statusRegister & 0x82;
+    statusRegister = (accumulator & 0x80) | (accumulator == 0 ? 0x2 : 0);
 
 }
 
@@ -633,7 +636,8 @@ void CPU::AND(uint8_t operand) {
 //Set the carry flag to the value of the shifted out bit
 void CPU::ASL(uint16_t address) {
 
-    statusRegister = ((memory[address] << 1) & 0x82) | (memory[address] & 0x80 >> 7);
+    uint8_t temp = memory[address] << 1;
+    statusRegister = (temp == 0 ? 0x2 : 0) | (temp & 0x80) | (memory[address] & 0x80 >> 7);
     memory[address] = memory[address] << 1;
 
 }
@@ -641,7 +645,27 @@ void CPU::ASL(uint16_t address) {
 //The ASL instruction but with accumulator addressing (that is, it operates directly on the accumulator)
 void CPU::ASLA() {
 
-    statusRegister = ((accumulator << 1) & 0x82) | (accumulator & 0x80 >> 7);
+    uint8_t temp = accumulator << 1;
+    statusRegister = (temp == 0 ? 0x2 : 0) | (temp & 0x80) | (accumulator & 0x80 >> 7);
     accumulator = accumulator << 1;
+
+}
+
+//Logical shift right the byte at the given address
+//Shift in a 0
+//Set the zero bit if applicable
+//Set the carry bit to the bit shifted out
+void CPU::LSR(uint16_t address) {
+
+    statusRegister = ((memory[address] >> 1) == 0 ? 0x2 : 0) | (memory[address] & 0x1);
+    memory[address] = memory[address] >> 1;
+     
+}
+
+//LSR accumulator addressing
+void CPU::LSRA() {
+
+    statusRegister = ((accumulator >> 1) == 0 ? 0x2 : 0) | (accumulator & 0x1);
+    accumulator = accumulator >> 1;
 
 }
