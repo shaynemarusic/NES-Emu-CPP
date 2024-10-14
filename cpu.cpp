@@ -486,12 +486,14 @@ void CPU::decode() {
             break;
         //SBC X, ind
         case 0xE1:
+            SBC(Xind(low));
             break;
         //CPX zpg
         case 0xE4:
             break;
         //SBC zpg
         case 0xE5:
+            SBC(zpg(low));
             break;
         //INC zpg
         case 0xE6:
@@ -501,6 +503,7 @@ void CPU::decode() {
             break;
         //SBC #
         case 0xE9:
+            SBC(low);
             break;
         //NOP impl
         case 0xEA:
@@ -510,6 +513,7 @@ void CPU::decode() {
             break;
         //SBC abs
         case 0xED:
+            SBC(abs(low, high));
             break;
         //INC abs
         case 0xEE:
@@ -519,9 +523,11 @@ void CPU::decode() {
             break;
         //SBC ind, Y
         case 0xF1:
+            SBC(indY(low));
             break;
         //SBC zpg, X
         case 0xF5:
+            SBC(zpgX(low));
             break;
         //INC zpg, X
         case 0xF6:
@@ -531,9 +537,11 @@ void CPU::decode() {
             break;
         //SBC abs, Y
         case 0xF9:
+            SBC(absY(low, high));
             break;
         //SBC abs, X
         case 0xFD:
+            SBC(absX(low, high));
             break;
         //INC abs, X
         case 0xFE:
@@ -680,11 +688,23 @@ void CPU::LSRA() {
 
 //Adds the operand and carry from previous instruction to the accumulator and store the result in the accumulator
 //This instruction behaves differently in Decimal Mode but the NES does not implement Decimal Mode so we don't care
+//Sets the zero, overflow, carry, and sign flags when applicable
 void CPU::ADC(int8_t operand) {
 
-    int8_t newOp = (statusRegister & 0x1) + operand;
-    int16_t temp = accumulator + newOp;
+    int16_t temp = accumulator + (statusRegister & 0x1) + operand;
     statusRegister = ((temp > 127 || temp < -128) ? 0x40 : 0) | (temp == 0 ? 0x2 : 0) | (temp & 0x80) | (temp > 255 ? 0x1 : 0);
+    accumulator = temp & 0xFF;
+
+}
+
+
+//Subtracts the operand and the complement of the carry flag from the accumulator and stores the result in the accumulator
+//Sets the zero, overflow, carry, and sign flags when applicable
+//Carry flag is set if the result is greater than or equal to 0
+void CPU::SBC(int8_t operand) {
+
+    int16_t temp = accumulator - operand - (~statusRegister & 0x1);
+    statusRegister = ((temp > 127 || temp < -128) ? 0x40 : 0) | (temp == 0 ? 0x2 : 0) | (temp & 0x80) | (temp >= 0 ? 0x1 : 0);
     accumulator = temp & 0xFF;
 
 }

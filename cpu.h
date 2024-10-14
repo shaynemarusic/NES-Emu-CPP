@@ -55,6 +55,7 @@ class CPU {
         void LSR(uint16_t address);
         void LSRA();
         void ADC(int8_t operand);
+        void SBC(int8_t operand);
 
         //Addressing modes
         uint8_t Xind(uint8_t byte);
