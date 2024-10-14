@@ -244,9 +244,11 @@ void CPU::decode() {
             break;
         //ADC X, ind
         case 0x61:
+            ADC(Xind(low));
             break;
         //ADC zpg
         case 0x65:
+            ADC(zpg(low));
             break;
         //ROR zpg
         case 0x66:
@@ -256,6 +258,7 @@ void CPU::decode() {
             break;
         //ADC #
         case 0x69:
+            ADC(low);
             break;
         //ROR A
         case 0x6A:
@@ -265,6 +268,7 @@ void CPU::decode() {
             break;
         //ADC abs
         case 0x6D:
+            ADC(abs(low, high));
             break;
         //ROR abs
         case 0x6E:
@@ -274,9 +278,11 @@ void CPU::decode() {
             break;
         //ADC ind, Y
         case 0x71:
+            ADC(indY(low));
             break;
         //ADC zpg, X
         case 0x75:
+            ADC(zpgX(low));
             break;
         //ROR zpg, X
         case 0x76:
@@ -286,9 +292,11 @@ void CPU::decode() {
             break;
         //ADC abs, Y
         case 0x79:
+            ADC(absY(low, high));
             break;
         //ADC abs, X
         case 0x7D:
+            ADC(absX(low, high));
             break;
         //ROR abs, X
         case 0x7E:
@@ -667,5 +675,16 @@ void CPU::LSRA() {
 
     statusRegister = ((accumulator >> 1) == 0 ? 0x2 : 0) | (accumulator & 0x1);
     accumulator = accumulator >> 1;
+
+}
+
+//Adds the operand and carry from previous instruction to the accumulator and store the result in the accumulator
+//This instruction behaves differently in Decimal Mode but the NES does not implement Decimal Mode so we don't care
+void CPU::ADC(int8_t operand) {
+
+    int8_t newOp = (statusRegister & 0x1) + operand;
+    int16_t temp = accumulator + newOp;
+    statusRegister = ((temp > 127 || temp < -128) ? 0x40 : 0) | (temp == 0 ? 0x2 : 0) | (temp & 0x80) | (temp > 255 ? 0x1 : 0);
+    accumulator = temp & 0xFF;
 
 }
