@@ -124,6 +124,7 @@ void CPU::decode() {
             break;
         //BIT zpg
         case 0x24:
+            BIT(zpg(low));
             break;
         //AND zpg
         case 0x25:
@@ -144,6 +145,7 @@ void CPU::decode() {
             break;
         //BIT abs
         case 0x2C:
+            BIT(abs(low, high));
             break;
         //AND abs
         case 0x2D:
@@ -185,9 +187,11 @@ void CPU::decode() {
             break;
         //EOR X, ind
         case 0x41:
+            EOR(Xind(low));
             break;
         //EOR zpg
         case 0x45:
+            EOR(zpg(low));
             break;
         //LSR zpg
         case 0x46:
@@ -198,6 +202,7 @@ void CPU::decode() {
             break;
         //EOR #
         case 0x49:
+            EOR(low);
             break;
         //LSR A
         case 0x4A:
@@ -208,6 +213,7 @@ void CPU::decode() {
             break;
         //EOR abs
         case 0x4D:
+            EOR(abs(low, high));
             break;
         //LSR abs
         case 0x4E:
@@ -218,9 +224,11 @@ void CPU::decode() {
             break;
         //EOR ind, Y
         case 0x51:
+            EOR(indY(low));
             break;
         //EOR zpg, X
         case 0x55:
+            EOR(zpgX(low));
             break;
         //LSR zpg, X
         case 0x56:
@@ -231,9 +239,11 @@ void CPU::decode() {
             break;
         //EOR abs, Y
         case 0x59:
+            EOR(absY(low, high));
             break;
         //EOR abs, X
         case 0x5D:
+            EOR(absX(low, high));
             break;
         //LSR abs, X
         case 0x5E:
@@ -642,6 +652,8 @@ uint16_t CPU::zpgXAdd(uint8_t low) { return (low + xReg) & 0xFF; }
 
 //Instructions
 
+//Logic Instructions
+
 //Bitwise OR operand with the accumulator and set the accumulator to the result
 //Sets the sign and zero flags if applicable
 void CPU::ORA(uint8_t operand) {
@@ -657,6 +669,24 @@ void CPU::AND(uint8_t operand) {
 
     accumulator = operand & accumulator;
     statusRegister = (accumulator & 0x80) | (accumulator == 0 ? 0x2 : 0);
+
+}
+
+//Performs bitwise Exclusive OR on the operand with the accumulator, storing the result in the accumulator
+//Sets the sign and zero bits if applicable
+void CPU::EOR(uint8_t operand) {
+
+    accumulator = (accumulator & ~operand) | (~accumulator & operand);
+    statusRegister = (accumulator & 0x80) | (accumulator == 0 ? 0x2 : 0);
+
+}
+
+//Bit test instruction
+//Sets the sign and overflow flags equal to the 7th and 6th bits of the operand resp. (using a 0 based index)
+//Sets the zero flag if the bitwise AND of the operand and the accumulator is 0 (the result of the AND is not stored anywhere)
+void CPU::BIT(uint8_t operand) {
+
+    statusRegister = (operand & 0xC0) | (accumulator & operand == 0 ? 0x2 : 0);
 
 }
 
@@ -699,6 +729,8 @@ void CPU::LSRA() {
     accumulator = accumulator >> 1;
 
 }
+
+//Arithmetic Instructions
 
 //Adds the operand and carry from previous instruction to the accumulator and store the result in the accumulator
 //This instruction behaves differently in Decimal Mode but the NES does not implement Decimal Mode so we don't care

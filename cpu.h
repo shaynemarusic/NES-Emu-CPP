@@ -48,12 +48,19 @@ class CPU {
         std::unique_ptr<int8_t[]> memory;
 
         //Instructions
+
+        //Logic Instructions 
         void ORA(uint8_t operand);
         void AND(uint8_t operand);
+        void EOR(uint8_t operand);
+        void BIT(uint8_t operand);
+
         void ASL(uint16_t address);
         void ASLA();
         void LSR(uint16_t address);
         void LSRA();
+
+        //Arithmetic Instructions
         void ADC(int8_t operand);
         void SBC(int8_t operand);
         void CMP(int8_t operand);
