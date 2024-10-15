@@ -132,6 +132,7 @@ void CPU::decode() {
             break;
         //ROL zpg
         case 0x26:
+            ROL(zpgAdd(low));
             break;
         //PLP impl
         case 0x28:
@@ -142,6 +143,7 @@ void CPU::decode() {
             break;
         //ROL A
         case 0x2A:
+            ROLA();
             break;
         //BIT abs
         case 0x2C:
@@ -153,6 +155,7 @@ void CPU::decode() {
             break;
         //ROL abs
         case 0x2E:
+            ROL(absAdd(low, high));
             break;
         //BMI rel
         case 0x30:
@@ -167,6 +170,7 @@ void CPU::decode() {
             break;
         //ROL zpg, X
         case 0x36:
+            ROL(zpgXAdd(low));
             break;
         //SEC impl
         case 0x38:
@@ -181,6 +185,7 @@ void CPU::decode() {
             break;
         //ROL abs, X
         case 0x3E:
+            ROL(absXAdd(low, high));
             break;
         //RTI impl
         case 0x40:
@@ -262,6 +267,7 @@ void CPU::decode() {
             break;
         //ROR zpg
         case 0x66:
+            ROR(zpgAdd(low));
             break;
         //PLA impl
         case 0x68:
@@ -272,6 +278,7 @@ void CPU::decode() {
             break;
         //ROR A
         case 0x6A:
+            RORA();
             break;
         //JMP ind
         case 0x6C:
@@ -282,6 +289,7 @@ void CPU::decode() {
             break;
         //ROR abs
         case 0x6E:
+            ROR(absAdd(low, high));
             break;
         //BVS rel
         case 0x70:
@@ -296,6 +304,7 @@ void CPU::decode() {
             break;
         //ROR zpg, X
         case 0x76:
+            ROR(zpgXAdd(low));
             break;
         //SEI impl
         case 0x78:
@@ -310,6 +319,7 @@ void CPU::decode() {
             break;
         //ROR abs, X
         case 0x7E:
+            ROR(absXAdd(low, high));
             break;
         //STA X, ind
         case 0x81:
@@ -659,7 +669,7 @@ uint16_t CPU::zpgXAdd(uint8_t low) { return (low + xReg) & 0xFF; }
 void CPU::ORA(uint8_t operand) {
 
     accumulator = operand | accumulator;
-    statusRegister = (accumulator & 0x80) | (accumulator == 0 ? 0x2 : 0);
+    statusRegister = (accumulator & 0x80) | (accumulator == 0 ? 0x2 : 0) | (statusRegister & 0x7D);
 
 }
 
@@ -668,7 +678,7 @@ void CPU::ORA(uint8_t operand) {
 void CPU::AND(uint8_t operand) {
 
     accumulator = operand & accumulator;
-    statusRegister = (accumulator & 0x80) | (accumulator == 0 ? 0x2 : 0);
+    statusRegister = (accumulator & 0x80) | (accumulator == 0 ? 0x2 : 0) | (statusRegister & 0x7D);
 
 }
 
@@ -677,7 +687,7 @@ void CPU::AND(uint8_t operand) {
 void CPU::EOR(uint8_t operand) {
 
     accumulator = (accumulator & ~operand) | (~accumulator & operand);
-    statusRegister = (accumulator & 0x80) | (accumulator == 0 ? 0x2 : 0);
+    statusRegister = (accumulator & 0x80) | (accumulator == 0 ? 0x2 : 0) | (statusRegister & 0x7D);
 
 }
 
@@ -686,9 +696,11 @@ void CPU::EOR(uint8_t operand) {
 //Sets the zero flag if the bitwise AND of the operand and the accumulator is 0 (the result of the AND is not stored anywhere)
 void CPU::BIT(uint8_t operand) {
 
-    statusRegister = (operand & 0xC0) | (accumulator & operand == 0 ? 0x2 : 0);
+    statusRegister = (operand & 0xC0) | (accumulator & operand == 0 ? 0x2 : 0) | (statusRegister & 0x3D);
 
 }
+
+//Shift Instructions
 
 //Arithmetic shift left the byte at the given address
 //Shift in a 0
@@ -697,7 +709,7 @@ void CPU::BIT(uint8_t operand) {
 void CPU::ASL(uint16_t address) {
 
     uint8_t temp = memory[address] << 1;
-    statusRegister = (temp == 0 ? 0x2 : 0) | (temp & 0x80) | (memory[address] & 0x80 >> 7);
+    statusRegister = (temp == 0 ? 0x2 : 0) | (temp & 0x80) | (memory[address] >> 7) | (statusRegister & 0x7C);
     memory[address] = memory[address] << 1;
 
 }
@@ -706,7 +718,7 @@ void CPU::ASL(uint16_t address) {
 void CPU::ASLA() {
 
     uint8_t temp = accumulator << 1;
-    statusRegister = (temp == 0 ? 0x2 : 0) | (temp & 0x80) | (accumulator & 0x80 >> 7);
+    statusRegister = (temp == 0 ? 0x2 : 0) | (temp & 0x80) | (accumulator >> 7) | (statusRegister & 0x7C);
     accumulator = accumulator << 1;
 
 }
@@ -717,7 +729,7 @@ void CPU::ASLA() {
 //Set the carry bit to the bit shifted out
 void CPU::LSR(uint16_t address) {
 
-    statusRegister = ((memory[address] >> 1) == 0 ? 0x2 : 0) | (memory[address] & 0x1);
+    statusRegister = ((memory[address] >> 1) == 0 ? 0x2 : 0) | (memory[address] & 0x1) | (statusRegister & 0x7C);
     memory[address] = memory[address] >> 1;
      
 }
@@ -725,8 +737,45 @@ void CPU::LSR(uint16_t address) {
 //LSR accumulator addressing
 void CPU::LSRA() {
 
-    statusRegister = ((accumulator >> 1) == 0 ? 0x2 : 0) | (accumulator & 0x1);
+    statusRegister = ((accumulator >> 1) == 0 ? 0x2 : 0) | (accumulator & 0x1) | (statusRegister & 0x7C);
     accumulator = accumulator >> 1;
+
+}
+
+//Rotate left one bit instruction
+//Performs a left shift but shifts in the carry bit instead of exclusively 0
+void CPU::ROL(uint16_t address) {
+
+    uint8_t temp = (memory[address] << 1) | (statusRegister & 0x1);
+    statusRegister = (temp == 0 ? 0x2 : 0) | (temp & 0x80) | (memory[address] >> 7) | (statusRegister & 0x7C);
+    memory[address] = temp;
+
+}
+
+//ROL accumulator addressing
+void CPU::ROLA() {
+
+    uint8_t temp = (accumulator << 1) | (statusRegister & 0x1);
+    statusRegister = (temp == 0 ? 0x2 : 0) | (temp & 0x80) | (accumulator >> 7) | (statusRegister & 0x7C);
+    accumulator = temp;
+
+}
+
+//Rotate right one bit instruction
+//Performs a right shift but shifts in the carry bit instead of exclusively 0
+void CPU::ROR(uint16_t address) {
+
+    uint8_t temp = (memory[address] >> 1) | ((statusRegister & 0x1) << 7);
+    statusRegister = ((memory[address] >> 1) == 0 ? 0x2 : 0) | (memory[address] & 0x1) | (statusRegister & 0x7C);
+    memory[address] = temp;
+
+}
+
+void CPU::RORA() {
+
+    uint8_t temp = (accumulator >> 1) | ((statusRegister & 0x1) << 7);
+    statusRegister = ((accumulator >> 1) == 0 ? 0x2 : 0) | (accumulator & 0x1) | (statusRegister & 0x7C);
+    accumulator = temp;
 
 }
 
@@ -738,7 +787,7 @@ void CPU::LSRA() {
 void CPU::ADC(int8_t operand) {
 
     int16_t temp = accumulator + (statusRegister & 0x1) + operand;
-    statusRegister = ((temp > 127 || temp < -128) ? 0x40 : 0) | (temp == 0 ? 0x2 : 0) | (temp & 0x80) | (temp > 255 ? 0x1 : 0);
+    statusRegister = ((temp > 127 || temp < -128) ? 0x40 : 0) | (temp == 0 ? 0x2 : 0) | (temp & 0x80) | (temp > 255 ? 0x1 : 0) | (statusRegister & 0x3C);
     accumulator = temp & 0xFF;
 
 }
@@ -750,7 +799,7 @@ void CPU::ADC(int8_t operand) {
 void CPU::SBC(int8_t operand) {
 
     int16_t temp = accumulator - operand - (~statusRegister & 0x1);
-    statusRegister = ((temp > 127 || temp < -128) ? 0x40 : 0) | (temp == 0 ? 0x2 : 0) | (temp & 0x80) | (temp >= 0 ? 0x1 : 0);
+    statusRegister = ((temp > 127 || temp < -128) ? 0x40 : 0) | (temp == 0 ? 0x2 : 0) | (temp & 0x80) | (temp >= 0 ? 0x1 : 0) | (statusRegister & 0x3C);
     accumulator = temp & 0xFF;
 
 }
@@ -762,7 +811,7 @@ void CPU::SBC(int8_t operand) {
 void CPU::CMP(int8_t operand) {
 
     int16_t temp = (int16_t) accumulator - (int16_t) operand;
-    statusRegister = (temp & 0x80) | (temp >= 0 ? 0x1 : 0) | (temp == 0 ? 0x2 : 0);
+    statusRegister = (temp & 0x80) | (temp >= 0 ? 0x1 : 0) | (temp == 0 ? 0x2 : 0) | (statusRegister & 0x7C);
 
 }
 
@@ -770,7 +819,7 @@ void CPU::CMP(int8_t operand) {
 void CPU::CPX(int8_t operand) {
 
     int16_t temp = (int16_t) xReg - (int16_t) operand;
-    statusRegister = (temp & 0x80) | (temp >= 0 ? 0x1 : 0) | (temp == 0 ? 0x2 : 0);
+    statusRegister = (temp & 0x80) | (temp >= 0 ? 0x1 : 0) | (temp == 0 ? 0x2 : 0) | (statusRegister & 0x7C);
 
 }
 
@@ -778,6 +827,6 @@ void CPU::CPX(int8_t operand) {
 void CPU::CPY(int8_t operand) {
 
     int16_t temp = (int16_t) yReg - (int16_t) operand;
-    statusRegister = (temp & 0x80) | (temp >= 0 ? 0x1 : 0) | (temp == 0 ? 0x2 : 0);
+    statusRegister = (temp & 0x80) | (temp >= 0 ? 0x1 : 0) | (temp == 0 ? 0x2 : 0) | (statusRegister & 0x7C);
 
 }

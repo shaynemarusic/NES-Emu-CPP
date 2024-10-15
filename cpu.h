@@ -14,11 +14,11 @@ class CPU {
         N: sign flag (0 is pos, 1 is neg)
         V: overflow flag set when an overflow is detected
         -: unused bit
-        B: break flag that's set when a break instruction is exeecuted
+        B: break flag that's set when a break instruction is executed
         D: decimal mode flag, unused in the NES
         I: interrupt disbale flag, interrupts are ignored while this flag is set
         Z: zero flag, set if the result of the last instruction was 0
-        c: carry flag, set if the last instruction resulted in an overflow or underflow
+        C: carry flag, set if the last instruction resulted in an overflow or underflow
         */
         uint8_t statusRegister;
         uint16_t programCounter;
@@ -55,10 +55,15 @@ class CPU {
         void EOR(uint8_t operand);
         void BIT(uint8_t operand);
 
+        //Shift Instructions
         void ASL(uint16_t address);
         void ASLA();
         void LSR(uint16_t address);
         void LSRA();
+        void ROL(uint16_t address);
+        void ROLA();
+        void ROR(uint16_t address);
+        void RORA();
 
         //Arithmetic Instructions
         void ADC(int8_t operand);
