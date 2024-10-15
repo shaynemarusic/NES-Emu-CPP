@@ -426,6 +426,7 @@ void CPU::decode() {
             break;
         //CPY #
         case 0xC0:
+            CPY(low);
             break;
         //CMP X, ind
         case 0xC1:
@@ -433,6 +434,7 @@ void CPU::decode() {
             break;
         //CPY zpg
         case 0xC4:
+            CPY(zpg(low));
             break;
         //CMP zpg
         case 0xC5:
@@ -453,6 +455,7 @@ void CPU::decode() {
             break;
         //CPY abs
         case 0xCC:
+            CPY(abs(low, high));
             break;
         //CMP abs
         case 0xCD:
@@ -491,6 +494,7 @@ void CPU::decode() {
             break;
         //CPX #
         case 0xE0:
+            CPX(low);
             break;
         //SBC X, ind
         case 0xE1:
@@ -498,6 +502,7 @@ void CPU::decode() {
             break;
         //CPX zpg
         case 0xE4:
+            CPX(zpg(low));
             break;
         //SBC zpg
         case 0xE5:
@@ -518,6 +523,7 @@ void CPU::decode() {
             break;
         //CPX abs
         case 0xEC:
+            CPX(abs(low, high));
             break;
         //SBC abs
         case 0xED:
@@ -724,6 +730,22 @@ void CPU::SBC(int8_t operand) {
 void CPU::CMP(int8_t operand) {
 
     int16_t temp = (int16_t) accumulator - (int16_t) operand;
-    statusRegister = (temp & 0x80) | (temp <= 0 ? 0x1 : 0) | (temp == 0 ? 0x2 : 0);
+    statusRegister = (temp & 0x80) | (temp >= 0 ? 0x1 : 0) | (temp == 0 ? 0x2 : 0);
+
+}
+
+//Similar to CMP but using the X register
+void CPU::CPX(int8_t operand) {
+
+    int16_t temp = (int16_t) xReg - (int16_t) operand;
+    statusRegister = (temp & 0x80) | (temp >= 0 ? 0x1 : 0) | (temp == 0 ? 0x2 : 0);
+
+}
+
+//Similar to CMP but using the Y register
+void CPU::CPY(int8_t operand) {
+
+    int16_t temp = (int16_t) yReg - (int16_t) operand;
+    statusRegister = (temp & 0x80) | (temp >= 0 ? 0x1 : 0) | (temp == 0 ? 0x2 : 0);
 
 }
