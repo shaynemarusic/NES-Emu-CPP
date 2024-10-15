@@ -429,12 +429,14 @@ void CPU::decode() {
             break;
         //CMP X, ind
         case 0xC1:
+            CMP(Xind(low));
             break;
         //CPY zpg
         case 0xC4:
             break;
         //CMP zpg
         case 0xC5:
+            CMP(zpg(low));
             break;
         //DEC zpg
         case 0xC6:
@@ -444,6 +446,7 @@ void CPU::decode() {
             break;
         //CMP #
         case 0xC9:
+            CMP(low);
             break;
         //DEX impl
         case 0xCA:
@@ -453,6 +456,7 @@ void CPU::decode() {
             break;
         //CMP abs
         case 0xCD:
+            CMP(abs(low, high));
             break;
         //DEC abs
         case 0xCE:
@@ -462,9 +466,11 @@ void CPU::decode() {
             break;
         //CMP ind, Y
         case 0xD1:
+            CMP(indY(low));
             break;
         //CMP zpg, X
         case 0xD5:
+            CMP(zpgX(low));
             break;
         //DEC zpg, X
         case 0xD6:
@@ -474,9 +480,11 @@ void CPU::decode() {
             break;
         //CMP abs, Y
         case 0xD9:
+            CMP(absY(low, high));
             break;
         //CMP abs, X
         case 0xDD:
+            CMP(absX(low, high));
             break;
         //DEC abs, X
         case 0xDE:
@@ -706,5 +714,16 @@ void CPU::SBC(int8_t operand) {
     int16_t temp = accumulator - operand - (~statusRegister & 0x1);
     statusRegister = ((temp > 127 || temp < -128) ? 0x40 : 0) | (temp == 0 ? 0x2 : 0) | (temp & 0x80) | (temp >= 0 ? 0x1 : 0);
     accumulator = temp & 0xFF;
+
+}
+
+//Compares the operand to the accumulator by subtracting the operand from the accumulator
+//Sets the zero, carry, and sign flags
+//The carry bit is set if the operand is greater than or equal to the accumulator
+//The accumulator is unaffected
+void CPU::CMP(int8_t operand) {
+
+    int16_t temp = (int16_t) accumulator - (int16_t) operand;
+    statusRegister = (temp & 0x80) | (temp <= 0 ? 0x1 : 0) | (temp == 0 ? 0x2 : 0);
 
 }
