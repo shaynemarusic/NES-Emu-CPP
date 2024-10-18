@@ -72,6 +72,14 @@ class CPU {
         void CPX(int8_t operand);
         void CPY(int8_t operand);
 
+        //Increment Instructions
+        void DEC(uint16_t address);
+        void DEX();
+        void DEY();
+        void INC(uint16_t address);
+        void INX();
+        void INY();
+
         //Addressing modes
         uint8_t Xind(uint8_t byte);
         uint8_t indY(uint8_t byte);

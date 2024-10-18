@@ -335,6 +335,7 @@ void CPU::decode() {
             break;
         //DEY impl
         case 0x88:
+            DEY();
             break;
         //TXA impl
         case 0x8A:
@@ -462,9 +463,11 @@ void CPU::decode() {
             break;
         //DEC zpg
         case 0xC6:
+            DEC(zpgAdd(low));
             break;
         //INY impl
         case 0xC8:
+            INY();
             break;
         //CMP #
         case 0xC9:
@@ -472,6 +475,7 @@ void CPU::decode() {
             break;
         //DEX impl
         case 0xCA:
+            DEX();
             break;
         //CPY abs
         case 0xCC:
@@ -483,6 +487,7 @@ void CPU::decode() {
             break;
         //DEC abs
         case 0xCE:
+            DEC(absAdd(low, high));
             break;
         //BNE rel
         case 0xD0:
@@ -497,6 +502,7 @@ void CPU::decode() {
             break;
         //DEC zpg, X
         case 0xD6:
+            DEC(zpgXAdd(low));
             break;
         //CLD impl
         case 0xD8:
@@ -511,6 +517,7 @@ void CPU::decode() {
             break;
         //DEC abs, X
         case 0xDE:
+            DEC(absXAdd(low, high));
             break;
         //CPX #
         case 0xE0:
@@ -530,9 +537,11 @@ void CPU::decode() {
             break;
         //INC zpg
         case 0xE6:
+            INC(zpgAdd(low));
             break;
         //INX impl
         case 0xE8:
+            INX();
             break;
         //SBC #
         case 0xE9:
@@ -551,6 +560,7 @@ void CPU::decode() {
             break;
         //INC abs
         case 0xEE:
+            INC(absAdd(low, high));
             break;
         //BEQ rel
         case 0xF0:
@@ -565,6 +575,7 @@ void CPU::decode() {
             break;
         //INC zpg, X
         case 0xF6:
+            INC(zpgXAdd(low));
             break;
         //SED impl
         case 0xF8:
@@ -579,6 +590,7 @@ void CPU::decode() {
             break;
         //INC abs, X
         case 0xFE:
+            INC(absXAdd(low, high));
             break;
         default:
             //Throw an exception - ADD LATER
@@ -828,5 +840,57 @@ void CPU::CPY(int8_t operand) {
 
     int16_t temp = (int16_t) yReg - (int16_t) operand;
     statusRegister = (temp & 0x80) | (temp >= 0 ? 0x1 : 0) | (temp == 0 ? 0x2 : 0) | (statusRegister & 0x7C);
+
+}
+
+//Increment Instructions
+
+//Decrements the value at the address by one
+//Only affects zero and sign flags
+void CPU::DEC(uint16_t address) {
+
+    memory[address]--;
+    statusRegister = (memory[address] & 0x80) | (memory[address] == 0 ? 0x2 : 0) | (statusRegister & 0x7D);
+
+}
+
+//Same as DEC but affecting the X register
+void CPU::DEX() {
+
+    xReg--;
+    statusRegister = (xReg & 0x80) | (xReg == 0 ? 0x2 : 0) | (statusRegister & 0x7D);
+
+}
+
+//Same as DEC but affecting the Y register
+void CPU::DEY() {
+
+    yReg--;
+    statusRegister = (yReg & 0x80) | (yReg == 0 ? 0x2 : 0) | (statusRegister & 0x7D);
+
+}
+
+//Increments the value at the address by one
+//Only affects zero and sign flags
+void CPU::INC(uint16_t address) {
+
+    memory[address]++;
+    statusRegister = (memory[address] & 0x80) | (memory[address] == 0 ? 0x2 : 0) | (statusRegister & 0x7D);
+
+}
+
+//Same as INC but affecting the X register
+void CPU::INX() {
+
+    xReg++;
+    statusRegister = (xReg & 0x80) | (xReg == 0 ? 0x2 : 0) | (statusRegister & 0x7D);
+
+}
+
+//Same as INC but affecting the Y register
+void CPU::INY() {
+
+    yReg++;
+    statusRegister = (yReg & 0x80) | (yReg == 0 ? 0x2 : 0) | (statusRegister & 0x7D);
 
 }
