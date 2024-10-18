@@ -80,6 +80,15 @@ class CPU {
         void INX();
         void INY();
 
+        //Flag Instructions
+        void CLC();
+        void CLD();
+        void CLI();
+        void CLV();
+        void SEC();
+        void SED();
+        void SEI();
+
         //Addressing modes
         uint8_t Xind(uint8_t byte);
         uint8_t indY(uint8_t byte);

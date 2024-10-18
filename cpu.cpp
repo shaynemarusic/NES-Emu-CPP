@@ -102,6 +102,7 @@ void CPU::decode() {
             break;
         //CLC impl
         case 0x18:
+            CLC();
             break;
         //ORA abs, Y
         case 0x19:
@@ -174,6 +175,7 @@ void CPU::decode() {
             break;
         //SEC impl
         case 0x38:
+            SEC();
             break;
         //AND abs, Y
         case 0x39:
@@ -241,6 +243,7 @@ void CPU::decode() {
             break;
         //CLI impl
         case 0x58:
+            CLI();
             break;
         //EOR abs, Y
         case 0x59:
@@ -308,6 +311,7 @@ void CPU::decode() {
             break;
         //SEI impl
         case 0x78:
+            SEI();
             break;
         //ADC abs, Y
         case 0x79:
@@ -429,6 +433,7 @@ void CPU::decode() {
             break;
         //CLV impl
         case 0xB8:
+            CLV();
             break;
         //LDA abs, Y
         case 0xB9:
@@ -506,6 +511,7 @@ void CPU::decode() {
             break;
         //CLD impl
         case 0xD8:
+            CLD();
             break;
         //CMP abs, Y
         case 0xD9:
@@ -579,6 +585,7 @@ void CPU::decode() {
             break;
         //SED impl
         case 0xF8:
+            SED();
             break;
         //SBC abs, Y
         case 0xF9:
@@ -892,5 +899,56 @@ void CPU::INY() {
 
     yReg++;
     statusRegister = (yReg & 0x80) | (yReg == 0 ? 0x2 : 0) | (statusRegister & 0x7D);
+
+}
+
+//Flag Instructions
+
+//Clears the carry flag
+void CPU::CLC() {
+
+    statusRegister = statusRegister & 0xFE;
+
+}
+
+//Clears the decimal mode flag. Don't think I actually need to implement this for NES emulation but who cares
+void CPU::CLD() {
+
+    statusRegister = statusRegister & 0xF7;
+
+}
+
+//Clears the interrupt disable flag
+void CPU::CLI() {
+
+    statusRegister = statusRegister & 0xFB;
+
+}
+
+//Clears the overflow flag
+void CPU::CLV() {
+
+    statusRegister = statusRegister & 0xBF;
+
+}
+
+//Sets the carry flag
+void CPU::SEC() {
+
+    statusRegister = statusRegister | 0x1;
+
+}
+
+//Sets the decimal mode flag
+void CPU::SED() {
+
+    statusRegister = statusRegister | 0x8;
+
+}
+
+//Sets the interrupt disable flag
+void CPU::SEI() {
+
+    statusRegister = statusRegister | 0x4;
 
 }
