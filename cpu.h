@@ -89,6 +89,16 @@ class CPU {
         void SED();
         void SEI();
 
+        //Branch Instructions
+        void BCC(int8_t operand);
+        void BCS(int8_t operand);
+        void BEQ(int8_t operand);
+        void BMI(int8_t operand);
+        void BNE(int8_t operand);
+        void BPL(int8_t operand);
+        void BVC(int8_t operand);
+        void BVS(int8_t operand);
+
         //Addressing modes
         uint8_t Xind(uint8_t byte);
         uint8_t indY(uint8_t byte);

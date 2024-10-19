@@ -27,7 +27,9 @@ void CPU::decode() {
     opcode = memory[programCounter];
     low = memory[programCounter + 1];
     high = memory[programCounter + 2];
-    //programCounter++;
+
+    //Need to add an additional check to see if the opcode is valid - will do later
+    programCounter += pcIncrement[opcode];
 
     //Switch over the low order nibble
     /*Operands indicate addressing mode. Note that 6502 is little endian so addresses are stored in memory least significant byte first
@@ -87,6 +89,7 @@ void CPU::decode() {
             break;
         //BPL rel
         case 0x10:
+            BPL(low);
             break;
         //ORA ind, Y
         case 0x11:
@@ -160,6 +163,7 @@ void CPU::decode() {
             break;
         //BMI rel
         case 0x30:
+            BMI(low);
             break;
         //AND ind, Y
         case 0x31:
@@ -228,6 +232,7 @@ void CPU::decode() {
             break;
         //BVC rel
         case 0x50:
+            BVC(low);
             break;
         //EOR ind, Y
         case 0x51:
@@ -296,6 +301,7 @@ void CPU::decode() {
             break;
         //BVS rel
         case 0x70:
+            BVS(low);
             break;
         //ADC ind, Y
         case 0x71:
@@ -355,6 +361,7 @@ void CPU::decode() {
             break;
         //BCC rel
         case 0x90:
+            BCC(low);
             break;
         //STA ind, Y
         case 0x91:
@@ -418,6 +425,7 @@ void CPU::decode() {
             break;
         //BCS rel
         case 0xB0:
+            BCS(low);
             break;
         //LDA ind, Y
         case 0xB1:
@@ -496,6 +504,7 @@ void CPU::decode() {
             break;
         //BNE rel
         case 0xD0:
+            BNE(low);
             break;
         //CMP ind, Y
         case 0xD1:
@@ -570,6 +579,7 @@ void CPU::decode() {
             break;
         //BEQ rel
         case 0xF0:
+            BEQ(low);
             break;
         //SBC ind, Y
         case 0xF1:
@@ -602,8 +612,6 @@ void CPU::decode() {
         default:
             //Throw an exception - ADD LATER
         
-        programCounter += pcIncrement[opcode];
-
     }
 
 }
@@ -950,5 +958,68 @@ void CPU::SED() {
 void CPU::SEI() {
 
     statusRegister = statusRegister | 0x4;
+
+}
+
+//Branch Instructions
+
+//Branch on carry clear
+//If the carry bit is 0, branch to programCounter + operand
+void CPU::BCC(int8_t operand) {
+
+    programCounter += (statusRegister & 0x1) == 0 ? operand : 0;
+
+}
+
+//Branch on carry set
+void CPU::BCS(int8_t operand) {
+
+    programCounter += (statusRegister & 0x1) == 0x1 ? operand : 0;
+
+}
+
+//Branch on zero set (aka branch on equal)
+//Branch if the zero bit is set
+void CPU::BEQ(int8_t operand) {
+
+    programCounter += (statusRegister & 0x2) == 0x2 ? operand : 0;
+
+}
+
+//Branch on result minus
+//Branch if the sign bit is set
+void CPU::BMI(int8_t operand) {
+
+    programCounter += (statusRegister & 0x80) == 0x80 ? operand : 0;
+
+}
+
+//Branch on zero clear (aka branch on not equal)
+void CPU::BNE(int8_t operand) {
+
+    programCounter += (statusRegister & 0x2) == 0 ? operand : 0;
+
+}
+
+//Branch on result plus
+//Branch if the sign bit is cleared
+void CPU::BPL(int8_t operand) {
+
+    programCounter += (statusRegister & 0x80) == 0 ? operand : 0;
+
+}
+
+//Branch on overflow clear
+//Branch if the overflow bit is set to 0
+void CPU::BVC(int8_t operand) {
+
+    programCounter += (statusRegister & 0x40) == 0 ? operand : 0;
+
+}
+
+//Branch on overflow set
+void CPU::BVS(int8_t operand) {
+
+    programCounter += (statusRegister & 0x40) == 0x40 ? operand : 0;
 
 }
