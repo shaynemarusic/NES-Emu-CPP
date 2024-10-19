@@ -333,15 +333,19 @@ void CPU::decode() {
             break;
         //STA X, ind
         case 0x81:
+            STA(XindAdd(low));
             break;
         //STY zpg
         case 0x84:
+            STY(zpgAdd(low));
             break;
         //STA zpg:
         case 0x85:
+            STA(zpgAdd(low));
             break;
         //STX zpg
         case 0x86:
+            STX(zpgAdd(low));
             break;
         //DEY impl
         case 0x88:
@@ -352,12 +356,15 @@ void CPU::decode() {
             break;
         //STY abs
         case 0x8C:
+            STY(absAdd(low, high));
             break;
         //STA abs
         case 0x8D:
+            STA(absAdd(low, high));
             break;
         //STX abs
         case 0x8E:
+            STX(absAdd(low, high));
             break;
         //BCC rel
         case 0x90:
@@ -365,63 +372,79 @@ void CPU::decode() {
             break;
         //STA ind, Y
         case 0x91:
+            STA(indYAdd(low));
             break;
         //STY zpg, X
         case 0x94:
+            STY(zpgXAdd(low));
             break;
         //STA zpg, X
         case 0x95:
+            STA(zpgXAdd(low));
             break;
         //STX zpg, Y
         case 0x96:
+            STX(zpgYAdd(low));
             break;
         //TYA impl
         case 0x98:
             break;
         //STA abs, Y
         case 0x99:
+            STA(absYAdd(low, high));
             break;
         //TXS impl
         case 0x9A:
             break;
         //STA abs, X
         case 0x9D:
+            STA(absXAdd(low, high));
             break;
         //LDY #
         case 0xA0:
+            LDY(low);
             break;
         //LDA X, ind
         case 0xA1:
+            LDA(Xind(low));
             break;
         //LDX #
         case 0xA2:
+            LDX(low);
             break;
         //LDY zpg
         case 0xA4:
+            LDY(zpg(low));
             break;
         //LDA zpg
         case 0xA5:
+            LDA(zpg(low));
             break;
         //LDX zpg
         case 0xA6:
+            LDX(zpg(low));
             break;
         //TAY impl
         case 0xA8:
             break;
         //LDA #
         case 0xA9:
+            LDA(low);
             break;
         //TAX impl
         case 0xAA:
             break;
         //LDY abs
         case 0xAC:
+            LDY(abs(low, high));
             break;
         //LDA abs
         case 0xAD:
+            LDA(abs(low, high));
             break;
         //LDX abs
         case 0xAE:
+            LDX(abs(low, high));
             break;
         //BCS rel
         case 0xB0:
@@ -429,15 +452,19 @@ void CPU::decode() {
             break;
         //LDA ind, Y
         case 0xB1:
+            LDA(indY(low));
             break;
         //LDY zpg, X
         case 0xB4:
+            LDY(zpgX(low));
             break;
         //LDA zpg, X
         case 0xB5:
+            LDA(zpgX(low));
             break;
         //LDX zpg, Y
         case 0xB6:
+            LDX(zpgY(low));
             break;
         //CLV impl
         case 0xB8:
@@ -445,18 +472,22 @@ void CPU::decode() {
             break;
         //LDA abs, Y
         case 0xB9:
+            LDA(absY(low, high));
             break;
         //TSX impl
         case 0xBA:
             break;
         //LDY abs, X
         case 0xBC:
+            LDY(absX(low, high));
             break;
         //LDA abs, X
         case 0xBD:
+            LDA(absY(low, high));
             break;
         //LDX abs, Y
         case 0xBE:
+            LDX(absY(low, high));
             break;
         //CPY #
         case 0xC0:
@@ -651,6 +682,9 @@ uint8_t CPU::zpg(uint8_t low) { return memory[low]; }
 //Zero Page, X Indexed
 uint8_t CPU::zpgX(uint8_t low) { return memory[(low + xReg) & 0xFF]; }
 
+//Zero Page, Y Indexed
+uint8_t CPU::zpgY(uint8_t low) { return memory[(low + yReg) & 0xFF]; }
+
 //Addressing modes - these ones return the addresses themselves
 
 //Indirect Indexed
@@ -687,6 +721,9 @@ uint16_t CPU::zpgAdd(uint8_t low) { return (uint16_t) low; }
 //Zero Page, X Indexed
 uint16_t CPU::zpgXAdd(uint8_t low) { return (low + xReg) & 0xFF; }
 
+//Zero Page, Y Indexed
+uint16_t CPU::zpgYAdd(uint8_t low) { return (low + yReg) & 0xFF; }
+
 //Instructions
 
 //Logic Instructions
@@ -721,11 +758,7 @@ void CPU::EOR(uint8_t operand) {
 //Bit test instruction
 //Sets the sign and overflow flags equal to the 7th and 6th bits of the operand resp. (using a 0 based index)
 //Sets the zero flag if the bitwise AND of the operand and the accumulator is 0 (the result of the AND is not stored anywhere)
-void CPU::BIT(uint8_t operand) {
-
-    statusRegister = (operand & 0xC0) | (accumulator & operand == 0 ? 0x2 : 0) | (statusRegister & 0x3D);
-
-}
+void CPU::BIT(uint8_t operand) { statusRegister = (operand & 0xC0) | (accumulator & operand == 0 ? 0x2 : 0) | (statusRegister & 0x3D); }
 
 //Shift Instructions
 
@@ -913,113 +946,89 @@ void CPU::INY() {
 //Flag Instructions
 
 //Clears the carry flag
-void CPU::CLC() {
-
-    statusRegister = statusRegister & 0xFE;
-
-}
+void CPU::CLC() { statusRegister = statusRegister & 0xFE; }
 
 //Clears the decimal mode flag. Don't think I actually need to implement this for NES emulation but who cares
-void CPU::CLD() {
-
-    statusRegister = statusRegister & 0xF7;
-
-}
+void CPU::CLD() { statusRegister = statusRegister & 0xF7; }
 
 //Clears the interrupt disable flag
-void CPU::CLI() {
-
-    statusRegister = statusRegister & 0xFB;
-
-}
+void CPU::CLI() { statusRegister = statusRegister & 0xFB; }
 
 //Clears the overflow flag
-void CPU::CLV() {
-
-    statusRegister = statusRegister & 0xBF;
-
-}
+void CPU::CLV() { statusRegister = statusRegister & 0xBF; }
 
 //Sets the carry flag
-void CPU::SEC() {
-
-    statusRegister = statusRegister | 0x1;
-
-}
+void CPU::SEC() { statusRegister = statusRegister | 0x1; }
 
 //Sets the decimal mode flag
-void CPU::SED() {
-
-    statusRegister = statusRegister | 0x8;
-
-}
+void CPU::SED() { statusRegister = statusRegister | 0x8; }
 
 //Sets the interrupt disable flag
-void CPU::SEI() {
-
-    statusRegister = statusRegister | 0x4;
-
-}
+void CPU::SEI() { statusRegister = statusRegister | 0x4; }
 
 //Branch Instructions
 
 //Branch on carry clear
 //If the carry bit is 0, branch to programCounter + operand
-void CPU::BCC(int8_t operand) {
-
-    programCounter += (statusRegister & 0x1) == 0 ? operand : 0;
-
-}
+void CPU::BCC(int8_t operand) { programCounter += (statusRegister & 0x1) == 0 ? operand : 0; }
 
 //Branch on carry set
-void CPU::BCS(int8_t operand) {
-
-    programCounter += (statusRegister & 0x1) == 0x1 ? operand : 0;
-
-}
+void CPU::BCS(int8_t operand) { programCounter += (statusRegister & 0x1) == 0x1 ? operand : 0; }
 
 //Branch on zero set (aka branch on equal)
 //Branch if the zero bit is set
-void CPU::BEQ(int8_t operand) {
-
-    programCounter += (statusRegister & 0x2) == 0x2 ? operand : 0;
-
-}
+void CPU::BEQ(int8_t operand) { programCounter += (statusRegister & 0x2) == 0x2 ? operand : 0; }
 
 //Branch on result minus
 //Branch if the sign bit is set
-void CPU::BMI(int8_t operand) {
-
-    programCounter += (statusRegister & 0x80) == 0x80 ? operand : 0;
-
-}
+void CPU::BMI(int8_t operand) { programCounter += (statusRegister & 0x80) == 0x80 ? operand : 0; }
 
 //Branch on zero clear (aka branch on not equal)
-void CPU::BNE(int8_t operand) {
-
-    programCounter += (statusRegister & 0x2) == 0 ? operand : 0;
-
-}
+void CPU::BNE(int8_t operand) { programCounter += (statusRegister & 0x2) == 0 ? operand : 0; }
 
 //Branch on result plus
 //Branch if the sign bit is cleared
-void CPU::BPL(int8_t operand) {
-
-    programCounter += (statusRegister & 0x80) == 0 ? operand : 0;
-
-}
+void CPU::BPL(int8_t operand) { programCounter += (statusRegister & 0x80) == 0 ? operand : 0; }
 
 //Branch on overflow clear
 //Branch if the overflow bit is set to 0
-void CPU::BVC(int8_t operand) {
-
-    programCounter += (statusRegister & 0x40) == 0 ? operand : 0;
-
-}
+void CPU::BVC(int8_t operand) { programCounter += (statusRegister & 0x40) == 0 ? operand : 0; }
 
 //Branch on overflow set
-void CPU::BVS(int8_t operand) {
+void CPU::BVS(int8_t operand) { programCounter += (statusRegister & 0x40) == 0x40 ? operand : 0; }
 
-    programCounter += (statusRegister & 0x40) == 0x40 ? operand : 0;
+//Load and Store Instructions
+
+//Load Accumulator with the operand
+//Affects sign and zero flags
+void CPU::LDA(uint8_t operand) {
+
+    accumulator = operand;
+    statusRegister = (accumulator & 0x80) | (accumulator == 0 ? 0x2 : 0) | (statusRegister & 0x7D);
 
 }
+
+//Load X register with the operand
+void CPU::LDX(uint8_t operand) {
+
+    xReg = operand;
+    statusRegister = (xReg & 0x80) | (xReg == 0 ? 0x2 : 0) | (statusRegister & 0x7D);
+
+}
+
+//Load Y register with the operand
+void CPU::LDY(uint8_t operand) {
+
+    yReg = operand;
+    statusRegister = (yReg & 0x80) | (yReg == 0 ? 0x2 : 0) | (statusRegister & 0x7D);
+
+}
+
+//Store the accumulator at the address
+void CPU::STA(uint16_t address) { memory[address] = accumulator; }
+
+//Store the X register at the address
+void CPU::STX(uint16_t address) { memory[address] = xReg; }
+
+//Store the Y register at the address
+void CPU::STY(uint16_t address) { memory[address] = yReg; }

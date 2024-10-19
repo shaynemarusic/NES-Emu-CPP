@@ -99,14 +99,23 @@ class CPU {
         void BVC(int8_t operand);
         void BVS(int8_t operand);
 
+        //Load and Store Instructions
+        void LDA(uint8_t operand);
+        void LDX(uint8_t operand);
+        void LDY(uint8_t operand);
+        void STA(uint16_t address);
+        void STX(uint16_t address);
+        void STY(uint16_t address);
+
         //Addressing modes
-        uint8_t Xind(uint8_t byte);
-        uint8_t indY(uint8_t byte);
+        uint8_t Xind(uint8_t low);
+        uint8_t indY(uint8_t low);
         uint8_t abs(uint8_t low, uint8_t high);
         uint8_t absX(uint8_t low, uint8_t high);
         uint8_t absY(uint8_t low, uint8_t high);
         uint8_t zpg(uint8_t low);
         uint8_t zpgX(uint8_t low);
+        uint8_t zpgY(uint8_t low);
 
         uint16_t XindAdd(uint8_t byte);
         uint16_t indYAdd(uint8_t byte);
@@ -115,6 +124,7 @@ class CPU {
         uint16_t absYAdd(uint8_t low, uint8_t high);
         uint16_t zpgAdd(uint8_t low);
         uint16_t zpgXAdd(uint8_t low);
+        uint16_t zpgYAdd(uint8_t low);
 
     public:
         CPU(const char * filename);
