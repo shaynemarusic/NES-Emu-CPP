@@ -122,6 +122,7 @@ void CPU::decode() {
             break;
         //JSR abs
         case 0x20:
+            JSR(absAdd(low, high));
             break;
         //AND X, ind
         case 0x21:
@@ -224,6 +225,7 @@ void CPU::decode() {
             break;
         //JMP abs
         case 0x4C:
+            JMP(absAdd(low, high));
             break;
         //EOR abs
         case 0x4D:
@@ -267,6 +269,7 @@ void CPU::decode() {
             break;
         //RTS impl
         case 0x60:
+            RTS();
             break;
         //ADC X, ind
         case 0x61:
@@ -294,6 +297,7 @@ void CPU::decode() {
             break;
         //JMP ind
         case 0x6C:
+            JMP(indAdd(low, high));
             break;
         //ADC abs
         case 0x6D:
@@ -696,6 +700,14 @@ uint8_t CPU::zpgX(uint8_t low) { return memory[(low + xReg) & 0xFF]; }
 uint8_t CPU::zpgY(uint8_t low) { return memory[(low + yReg) & 0xFF]; }
 
 //Addressing modes - these ones return the addresses themselves
+
+//Indirect
+uint16_t CPU::indAdd(uint8_t low, uint8_t high) {
+
+    uint16_t exp = ((uint16_t) high << 8) | low;
+    return ((uint16_t) memory[exp + 1] << 8) | memory[exp];
+
+}
 
 //Indirect Indexed
 uint16_t CPU::XindAdd(uint8_t low) {
@@ -1127,5 +1139,31 @@ void CPU::PLP() {
 
     stackPointer++;
     statusRegister = memory[0x100 + stackPointer];
+
+}
+
+//Control Instructions
+
+//Sets the program counter to the address
+void CPU::JMP(uint16_t address) { programCounter = address; }
+
+//Jump to the subroutine at the address
+//Push the program counter onto the stack
+void CPU::JSR(uint16_t address) {
+
+    uint8_t low = (uint8_t) programCounter;
+    uint8_t high = (uint8_t) (programCounter >> 8);
+    memory[0x100 + stackPointer] = low;
+    memory[0x100 + stackPointer - 1] = high;
+    stackPointer -= 2;
+    programCounter = address;
+
+}
+
+//Return from subroutine
+void CPU::RTS() {
+
+    stackPointer += 2;
+    programCounter = (((uint16_t) memory[0x100 + stackPointer - 1]) << 8) | memory[0x100 + stackPointer];
 
 }

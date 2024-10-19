@@ -121,6 +121,11 @@ class CPU {
         void PLA();
         void PLP();
 
+        //Control Instructions
+        void JMP(uint16_t address);
+        void JSR(uint16_t address);
+        void RTS();
+
         //Addressing modes
         uint8_t Xind(uint8_t low);
         uint8_t indY(uint8_t low);
@@ -139,6 +144,7 @@ class CPU {
         uint16_t zpgAdd(uint8_t low);
         uint16_t zpgXAdd(uint8_t low);
         uint16_t zpgYAdd(uint8_t low);
+        uint16_t indAdd(uint8_t low, uint8_t high);
 
     public:
         CPU(const char * filename);
