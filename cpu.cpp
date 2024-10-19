@@ -353,6 +353,7 @@ void CPU::decode() {
             break;
         //TXA impl
         case 0x8A:
+            TXA();
             break;
         //STY abs
         case 0x8C:
@@ -388,6 +389,7 @@ void CPU::decode() {
             break;
         //TYA impl
         case 0x98:
+            TYA();
             break;
         //STA abs, Y
         case 0x99:
@@ -395,6 +397,7 @@ void CPU::decode() {
             break;
         //TXS impl
         case 0x9A:
+            TXS();
             break;
         //STA abs, X
         case 0x9D:
@@ -426,6 +429,7 @@ void CPU::decode() {
             break;
         //TAY impl
         case 0xA8:
+            TAY();
             break;
         //LDA #
         case 0xA9:
@@ -433,6 +437,7 @@ void CPU::decode() {
             break;
         //TAX impl
         case 0xAA:
+            TAX();
             break;
         //LDY abs
         case 0xAC:
@@ -476,6 +481,7 @@ void CPU::decode() {
             break;
         //TSX impl
         case 0xBA:
+            TSX();
             break;
         //LDY abs, X
         case 0xBC:
@@ -1032,3 +1038,54 @@ void CPU::STX(uint16_t address) { memory[address] = xReg; }
 
 //Store the Y register at the address
 void CPU::STY(uint16_t address) { memory[address] = yReg; }
+
+//Transfer Instructions
+
+//Copies the value of accumulator into the X register
+//Affects zero and sign flags
+void CPU::TAX() {
+
+    xReg = accumulator;
+    statusRegister = (xReg & 0x80) | (xReg == 0 ? 0x2 : 0) | (statusRegister & 0x7D);
+
+}
+
+//Copies the value of accumulator into the Y register
+void CPU::TAY() {
+
+    yReg = accumulator;
+    statusRegister = (yReg & 0x80) | (yReg == 0 ? 0x2 : 0) | (statusRegister & 0x7D);
+
+}
+
+//Copies the value of the stack pointer into the X register
+void CPU::TSX() {
+
+    xReg = stackPointer;
+    statusRegister = (xReg & 0x80) | (xReg == 0 ? 0x2 : 0) | (statusRegister & 0x7D);
+
+}
+
+//Copies the X register into the accumulator
+void CPU::TXA() {
+
+    accumulator = xReg;
+    statusRegister = (accumulator & 0x80) | (accumulator == 0 ? 0x2 : 0) | (statusRegister & 0x7D);
+
+}
+
+//Copies the X register into the stack pointer
+void CPU::TXS() {
+
+    stackPointer = xReg;
+    statusRegister = (stackPointer & 0x80) | (stackPointer == 0 ? 0x2 : 0) | (stackPointer & 0x7D);
+
+}
+
+//Copies the Y register into the accumulator
+void CPU::TYA() {
+
+    accumulator = yReg;
+    statusRegister = (accumulator & 0x80) | (accumulator == 0 ? 0x2 : 0) | (statusRegister & 0x7D);
+
+}

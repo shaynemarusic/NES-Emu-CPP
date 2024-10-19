@@ -107,6 +107,14 @@ class CPU {
         void STX(uint16_t address);
         void STY(uint16_t address);
 
+        //Transfer Instructions
+        void TAX();
+        void TAY();
+        void TSX();
+        void TXA();
+        void TXS();
+        void TYA();
+
         //Addressing modes
         uint8_t Xind(uint8_t low);
         uint8_t indY(uint8_t low);
