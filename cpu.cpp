@@ -70,6 +70,7 @@ void CPU::decode() {
             break;
         //PHP impl
         case 0x08:
+            PHP();
             break;
         //ORA #
         case 0x09:
@@ -140,6 +141,7 @@ void CPU::decode() {
             break;
         //PLP impl
         case 0x28:
+            PLP();
             break;
         //AND #
         case 0x29:
@@ -210,6 +212,7 @@ void CPU::decode() {
             break;
         //PHA impl
         case 0x48:
+            PHA();
             break;
         //EOR #
         case 0x49:
@@ -279,6 +282,7 @@ void CPU::decode() {
             break;
         //PLA impl
         case 0x68:
+            PLA();
             break;
         //ADC #
         case 0x69:
@@ -1087,5 +1091,41 @@ void CPU::TYA() {
 
     accumulator = yReg;
     statusRegister = (accumulator & 0x80) | (accumulator == 0 ? 0x2 : 0) | (statusRegister & 0x7D);
+
+}
+
+//Stack Instructions
+
+//Push accumulator onto the stack
+void CPU::PHA() {
+
+    memory[0x100 + stackPointer] = accumulator;
+    stackPointer--;
+
+}
+
+//Push the status register onto the stack
+void CPU::PHP() {
+
+    memory[0x100 + stackPointer] = statusRegister;
+    stackPointer--;
+
+}
+
+//Pull the contents of the stack and put in the accumulator
+//Affects sign and zero flags
+void CPU::PLA() {
+
+    stackPointer++;
+    accumulator = memory[0x100 + stackPointer];
+    statusRegister = statusRegister = (accumulator & 0x80) | (accumulator == 0 ? 0x2 : 0) | (statusRegister & 0x7D);
+
+}
+
+//Pull the contents of the stack and put in the status register
+void CPU::PLP() {
+
+    stackPointer++;
+    statusRegister = memory[0x100 + stackPointer];
 
 }

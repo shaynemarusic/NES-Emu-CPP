@@ -115,6 +115,12 @@ class CPU {
         void TXS();
         void TYA();
 
+        //Stack Instructions
+        void PHA();
+        void PHP();
+        void PLA();
+        void PLP();
+
         //Addressing modes
         uint8_t Xind(uint8_t low);
         uint8_t indY(uint8_t low);
