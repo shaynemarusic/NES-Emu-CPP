@@ -6,7 +6,7 @@ std::unordered_map<uint8_t, uint8_t> pcIncrement = {
 };
 
 //The main constructor
-CPU::CPU(const char * filename) {
+CPU::CPU() {
 
     //Initialize memory
     memory = std::unique_ptr<int8_t[]>(new int8_t[65536]);

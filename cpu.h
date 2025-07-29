@@ -31,7 +31,6 @@ class CPU {
         //Like the X register but cannot affect the stack pointer
         int8_t yReg;
         //This may or may not be necessary
-        std::fstream romFile;
 
         //Memory
         /*The 6502 had a 64KB memory
@@ -147,7 +146,7 @@ class CPU {
         uint16_t indAdd(uint8_t low, uint8_t high);
 
     public:
-        CPU(const char * filename);
+        CPU();
         //Destructor may or may not be needed. Depends on implementation details yet to be ironed out
         //~CPU();
         void decode();
