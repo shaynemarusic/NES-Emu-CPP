@@ -6,6 +6,19 @@ std::unordered_map<uint8_t, uint8_t> pcIncrement = {
 };
 
 //The main constructor
+CPU::CPU(int memory_mapper) {
+
+    //Initialize memory
+    memory = std::unique_ptr<int8_t[]>(new int8_t[65536]);
+    std::fill_n(this->memory.get(), 65536, 0);
+
+    stackPointer = 0xFF;
+    programCounter = 0xFFFC;
+
+    mem_map = memory_mapper;
+}
+
+//This should never be used in practice, but needs to exist so the compiler doesn't freak
 CPU::CPU() {
 
     //Initialize memory
@@ -15,9 +28,7 @@ CPU::CPU() {
     stackPointer = 0xFF;
     programCounter = 0xFFFC;
 
-    //Open the rom file - worry about the details of this later
-    //this->romFile.open(filename, std::ios::in | std::ios::binary | std::ios::ate);
-
+    mem_map = 0;
 }
 
 //Decodes and executes instructions
@@ -1166,4 +1177,9 @@ void CPU::RTS() {
     stackPointer += 2;
     programCounter = (((uint16_t) memory[0x100 + stackPointer - 1]) << 8) | memory[0x100 + stackPointer];
 
+}
+
+//Mapper Write function implementations
+void CPU::default_write(uint16_t address, int8_t& val) {
+    memory[address] = val;
 }

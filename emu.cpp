@@ -2,9 +2,6 @@
 #include <iostream>
 
 Emulator::Emulator(const char * filename) {
-    //Initialize CPU
-    cpu = CPU();
-
     //Initialize PPU
 
     //Initialize APU
@@ -69,8 +66,12 @@ Emulator::Emulator(const char * filename) {
         //The mapper we use is determined by an 8 bit number whose lower nibble is the upper nibble of flag6 and whose upper nibble is the
         // upper nibble of flag7
         //For now, assume no mapper
-        mapperNum = (flag7 & 0xF0) | (flag6 >> 4);
+        int mapperNum = (flag7 & 0xF0) | (flag6 >> 4);
+
+        //Initialize CPU
+        cpu = CPU(mapperNum);
         
+        //Instead of using OOP principles to implement mappers, each mapper will have a write function stored in a table
 
     }
     else {

@@ -14,7 +14,6 @@ class Emulator {
         //iNES header flags used for determining which memory mapper to use
         int flag6;
         int flag7;
-        int mapperNum;
     public:
         Emulator(const char * filename);
 };

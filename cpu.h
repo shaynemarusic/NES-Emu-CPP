@@ -30,6 +30,7 @@ class CPU {
         int8_t xReg;
         //Like the X register but cannot affect the stack pointer
         int8_t yReg;
+        int mem_map;
         //This may or may not be necessary
 
         //Memory
@@ -106,6 +107,13 @@ class CPU {
         void STX(uint16_t address);
         void STY(uint16_t address);
 
+        //Memory Map Write Functions - these will be used in place of the above ST* instructions
+        void default_write(uint16_t address, int8_t& val);
+
+        std::unordered_map<int, void (CPU::*) (uint16_t address, int8_t& val)> writes = {
+            {0, default_write}
+        };
+
         //Transfer Instructions
         void TAX();
         void TAY();
@@ -146,6 +154,7 @@ class CPU {
         uint16_t indAdd(uint8_t low, uint8_t high);
 
     public:
+        CPU(int memory_mapper);
         CPU();
         //Destructor may or may not be needed. Depends on implementation details yet to be ironed out
         //~CPU();
