@@ -103,11 +103,12 @@ class CPU {
         void LDA(uint8_t operand);
         void LDX(uint8_t operand);
         void LDY(uint8_t operand);
-        void STA(uint16_t address);
-        void STX(uint16_t address);
-        void STY(uint16_t address);
+        // void STA(uint16_t address);
+        // void STX(uint16_t address);
+        // void STY(uint16_t address);
 
         //Memory Map Write Functions - these will be used in place of the above ST* instructions
+        void write(uint16_t address, int8_t& val);
         void default_write(uint16_t address, int8_t& val);
 
         std::unordered_map<int, void (CPU::*) (uint16_t address, int8_t& val)> writes = {

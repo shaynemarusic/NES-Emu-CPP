@@ -64,7 +64,7 @@ Emulator::Emulator(const char * filename) {
 
         //Load everything into memory based on memory mapper
         //The mapper we use is determined by an 8 bit number whose lower nibble is the upper nibble of flag6 and whose upper nibble is the
-        // upper nibble of flag7
+        //upper nibble of flag7
         //For now, assume no mapper
         int mapperNum = (flag7 & 0xF0) | (flag6 >> 4);
 

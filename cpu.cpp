@@ -352,19 +352,19 @@ void CPU::decode() {
             break;
         //STA X, ind
         case 0x81:
-            STA(XindAdd(low));
+            write(XindAdd(low), accumulator);
             break;
         //STY zpg
         case 0x84:
-            STY(zpgAdd(low));
+            write(zpgAdd(low), yReg);
             break;
         //STA zpg:
         case 0x85:
-            STA(zpgAdd(low));
+            write(zpgAdd(low), accumulator);
             break;
         //STX zpg
         case 0x86:
-            STX(zpgAdd(low));
+            write(zpgAdd(low), xReg);
             break;
         //DEY impl
         case 0x88:
@@ -376,15 +376,15 @@ void CPU::decode() {
             break;
         //STY abs
         case 0x8C:
-            STY(absAdd(low, high));
+            write(absAdd(low, high), yReg);
             break;
         //STA abs
         case 0x8D:
-            STA(absAdd(low, high));
+            write(absAdd(low, high), accumulator);
             break;
         //STX abs
         case 0x8E:
-            STX(absAdd(low, high));
+            write(absAdd(low, high), xReg);
             break;
         //BCC rel
         case 0x90:
@@ -392,19 +392,19 @@ void CPU::decode() {
             break;
         //STA ind, Y
         case 0x91:
-            STA(indYAdd(low));
+            write(indYAdd(low), accumulator);
             break;
         //STY zpg, X
         case 0x94:
-            STY(zpgXAdd(low));
+            write(zpgXAdd(low), yReg);
             break;
         //STA zpg, X
         case 0x95:
-            STA(zpgXAdd(low));
+            write(zpgXAdd(low), accumulator);
             break;
         //STX zpg, Y
         case 0x96:
-            STX(zpgYAdd(low));
+            write(zpgYAdd(low), yReg);
             break;
         //TYA impl
         case 0x98:
@@ -412,7 +412,7 @@ void CPU::decode() {
             break;
         //STA abs, Y
         case 0x99:
-            STA(absYAdd(low, high));
+            write(absYAdd(low, high), accumulator);
             break;
         //TXS impl
         case 0x9A:
@@ -420,7 +420,7 @@ void CPU::decode() {
             break;
         //STA abs, X
         case 0x9D:
-            STA(absXAdd(low, high));
+            write(absXAdd(low, high), accumulator);
             break;
         //LDY #
         case 0xA0:
@@ -803,7 +803,8 @@ void CPU::ASL(uint16_t address) {
 
     uint8_t temp = memory[address] << 1;
     statusRegister = (temp == 0 ? 0x2 : 0) | (temp & 0x80) | (memory[address] >> 7) | (statusRegister & 0x7C);
-    memory[address] = memory[address] << 1;
+    int8_t shifted = memory[address] << 1;
+    write(address, shifted);
 
 }
 
@@ -823,7 +824,8 @@ void CPU::ASLA() {
 void CPU::LSR(uint16_t address) {
 
     statusRegister = ((memory[address] >> 1) == 0 ? 0x2 : 0) | (memory[address] & 0x1) | (statusRegister & 0x7C);
-    memory[address] = memory[address] >> 1;
+    int8_t shifted = memory[address] >> 1;
+    write(address, shifted);
      
 }
 
@@ -839,16 +841,16 @@ void CPU::LSRA() {
 //Performs a left shift but shifts in the carry bit instead of exclusively 0
 void CPU::ROL(uint16_t address) {
 
-    uint8_t temp = (memory[address] << 1) | (statusRegister & 0x1);
+    int8_t temp = (memory[address] << 1) | (statusRegister & 0x1);
     statusRegister = (temp == 0 ? 0x2 : 0) | (temp & 0x80) | (memory[address] >> 7) | (statusRegister & 0x7C);
-    memory[address] = temp;
+    write(address, temp);
 
 }
 
 //ROL accumulator addressing
 void CPU::ROLA() {
 
-    uint8_t temp = (accumulator << 1) | (statusRegister & 0x1);
+    int8_t temp = (accumulator << 1) | (statusRegister & 0x1);
     statusRegister = (temp == 0 ? 0x2 : 0) | (temp & 0x80) | (accumulator >> 7) | (statusRegister & 0x7C);
     accumulator = temp;
 
@@ -858,15 +860,15 @@ void CPU::ROLA() {
 //Performs a right shift but shifts in the carry bit instead of exclusively 0
 void CPU::ROR(uint16_t address) {
 
-    uint8_t temp = (memory[address] >> 1) | ((statusRegister & 0x1) << 7);
+    int8_t temp = (memory[address] >> 1) | ((statusRegister & 0x1) << 7);
     statusRegister = ((memory[address] >> 1) == 0 ? 0x2 : 0) | (memory[address] & 0x1) | (statusRegister & 0x7C);
-    memory[address] = temp;
+    write(address, temp);
 
 }
 
 void CPU::RORA() {
 
-    uint8_t temp = (accumulator >> 1) | ((statusRegister & 0x1) << 7);
+    int8_t temp = (accumulator >> 1) | ((statusRegister & 0x1) << 7);
     statusRegister = ((accumulator >> 1) == 0 ? 0x2 : 0) | (accumulator & 0x1) | (statusRegister & 0x7C);
     accumulator = temp;
 
@@ -930,7 +932,8 @@ void CPU::CPY(int8_t operand) {
 //Only affects zero and sign flags
 void CPU::DEC(uint16_t address) {
 
-    memory[address]--;
+    int8_t decremented = memory[address] - 1;
+    write(address, decremented);
     statusRegister = (memory[address] & 0x80) | (memory[address] == 0 ? 0x2 : 0) | (statusRegister & 0x7D);
 
 }
@@ -955,7 +958,8 @@ void CPU::DEY() {
 //Only affects zero and sign flags
 void CPU::INC(uint16_t address) {
 
-    memory[address]++;
+    int8_t incremented = memory[address] + 1;
+    write(address, incremented);
     statusRegister = (memory[address] & 0x80) | (memory[address] == 0 ? 0x2 : 0) | (statusRegister & 0x7D);
 
 }
@@ -1057,14 +1061,15 @@ void CPU::LDY(uint8_t operand) {
 
 }
 
-//Store the accumulator at the address
-void CPU::STA(uint16_t address) { memory[address] = accumulator; }
+// Replaced by write() and mapper functions
+// //Store the accumulator at the address
+// void CPU::STA(uint16_t address) { memory[address] = accumulator; }
 
-//Store the X register at the address
-void CPU::STX(uint16_t address) { memory[address] = xReg; }
+// //Store the X register at the address
+// void CPU::STX(uint16_t address) { memory[address] = xReg; }
 
-//Store the Y register at the address
-void CPU::STY(uint16_t address) { memory[address] = yReg; }
+// //Store the Y register at the address
+// void CPU::STY(uint16_t address) { memory[address] = yReg; }
 
 //Transfer Instructions
 
@@ -1122,7 +1127,7 @@ void CPU::TYA() {
 //Push accumulator onto the stack
 void CPU::PHA() {
 
-    memory[0x100 + stackPointer] = accumulator;
+    write(0x100 + stackPointer, (int8_t&)accumulator);
     stackPointer--;
 
 }
@@ -1130,7 +1135,7 @@ void CPU::PHA() {
 //Push the status register onto the stack
 void CPU::PHP() {
 
-    memory[0x100 + stackPointer] = statusRegister;
+    write(0x100 + stackPointer, (int8_t&)statusRegister);
     stackPointer--;
 
 }
@@ -1162,10 +1167,10 @@ void CPU::JMP(uint16_t address) { programCounter = address; }
 //Push the program counter onto the stack
 void CPU::JSR(uint16_t address) {
 
-    uint8_t low = (uint8_t) programCounter;
-    uint8_t high = (uint8_t) (programCounter >> 8);
-    memory[0x100 + stackPointer] = low;
-    memory[0x100 + stackPointer - 1] = high;
+    int8_t low = programCounter;
+    int8_t high = programCounter >> 8;
+    write(0x100 + stackPointer, low);
+    write(0x100 + stackPointer - 1, high);
     stackPointer -= 2;
     programCounter = address;
 
@@ -1180,6 +1185,42 @@ void CPU::RTS() {
 }
 
 //Mapper Write function implementations
+
+// Base write function from which the mapper writes are called
+void CPU::write(uint16_t address, int8_t& val) {
+    // Mirror in correct location
+    // Three mirrors in this range
+    if (address <= 0x1FFF) {
+        uint16_t mirror = (address + 0x800) % 0x2000;
+        memory[mirror] = val;
+        mirror = (mirror + 0x800) % 0x2000;
+        memory[mirror] = val;
+        mirror = (mirror + 0x800) % 0x2000;
+        memory[mirror] = val;
+
+        memory[address] = val;
+    }
+    // Mirrored every 8 bytes
+    else if (address <= 0x401F) {
+        uint16_t mirror = address;
+        for (int i = 0; i < 1024; i++) {
+            mirror = (mirror + 0x8) % 0x2000 + 0x2000;
+            memory[mirror] = val;
+        }
+
+        memory[address] = val;
+    }
+    // Don't think anything needs to be done here tbh; no mirroring
+    else if (address <= 0x7FFF) {
+        memory[address] = val;
+    }
+    // Writing to ROM. Do memory mapper stuff
+    else {
+        (this->*writes[mem_map])(address, val);
+    }
+}
+
+// Default memory mapper write. Does nothing
 void CPU::default_write(uint16_t address, int8_t& val) {
-    memory[address] = val;
+    return;
 }
