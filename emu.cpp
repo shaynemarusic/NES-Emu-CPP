@@ -62,6 +62,8 @@ Emulator::Emulator(const char * filename) {
         romFile.read(&byte, 1);
         flag7 = byte;
 
+        //flags 8-10 are rarely used, bytes 11-15 are unused padding, so just jump to byte 16
+
         //Load everything into memory based on memory mapper
         //The mapper we use is determined by an 8 bit number whose lower nibble is the upper nibble of flag6 and whose upper nibble is the
         //upper nibble of flag7
@@ -71,7 +73,42 @@ Emulator::Emulator(const char * filename) {
         //Initialize CPU
         cpu = CPU(mapperNum);
         
-        //Instead of using OOP principles to implement mappers, each mapper will have a write function stored in a table
+        // Instead of using OOP principles to implement mappers, each mapper will have a write function stored in a table
+
+        // Check for trainer; low-key don't know what to do if there is one in terms of writing to memory, so will just skip the trainer
+        // if there is one for now
+
+        if ((flag6 & 4) == 4) {
+            romFile.seekg(528);
+        }
+        else {
+            romFile.seekg(16);
+        }
+
+        // Read in the initial PRG-ROM into the CPU - varies based on mapper
+        // May need to re-engineer this later but this shall do for having no mapper probably
+
+        // Mirror the rom bank
+        if (prg_rom == 1) {
+            for (int i = 0; i < 16000; i++) {
+                romFile.read(&byte, 1);
+                cpu.memory[0x8000 + i] = byte;
+                cpu.memory[0xC000 + i] = byte;
+            }
+        }
+        // Load first two banks into memory otherwise
+        else {
+            for (int i = 0; i < 32000; i++) {
+                romFile.read(&byte, 1);
+                cpu.memory[0x8000 + i] = byte;
+            }
+        }
+
+        // Perform reset interrupt
+        cpu.interrupt_reset();
+
+        // Read CHR-ROM
+
 
     }
     else {

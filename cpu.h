@@ -45,7 +45,7 @@ class CPU {
             PRG-ROM - 0x08000 to 0x0FFFF. This is program ROM. It is divided into two banks: 0x08000 to 0x0BFFF and 0x0C000 to 0x0FFFF.
             How these banks are utilized is dependent on the size of the game
         */
-        std::unique_ptr<int8_t[]> memory;
+        
 
         //Instructions
 
@@ -108,12 +108,11 @@ class CPU {
         // void STY(uint16_t address);
 
         //Memory Map Write Functions - these will be used in place of the above ST* instructions
-        void write(uint16_t address, int8_t& val);
-        void default_write(uint16_t address, int8_t& val);
-
         std::unordered_map<int, void (CPU::*) (uint16_t address, int8_t& val)> writes = {
             {0, default_write}
         };
+        void write(uint16_t address, int8_t& val);
+        void default_write(uint16_t address, int8_t& val);
 
         //Transfer Instructions
         void TAX();
@@ -160,5 +159,7 @@ class CPU {
         //Destructor may or may not be needed. Depends on implementation details yet to be ironed out
         //~CPU();
         void decode();
+        void interrupt_reset();
+        std::unique_ptr<int8_t[]> memory;
 
 };

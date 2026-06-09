@@ -13,6 +13,7 @@ CPU::CPU(int memory_mapper) {
     std::fill_n(this->memory.get(), 65536, 0);
 
     stackPointer = 0xFF;
+    // This value isn't actually correct; the program counter is initialized the value of the reset vector at 0xFFFC and 0xFFFD
     programCounter = 0xFFFC;
 
     mem_map = memory_mapper;
@@ -1223,4 +1224,20 @@ void CPU::write(uint16_t address, int8_t& val) {
 // Default memory mapper write. Does nothing
 void CPU::default_write(uint16_t address, int8_t& val) {
     return;
+}
+
+// Interrupt handling functions
+
+// Reset interrupt which is triggered on system startup or whenever the reset button is pressed
+void CPU::interrupt_reset() {
+    // Set interrupt disable
+    //this->SEI();
+    // Load address of interrupt handling routine into program counter - in this case the address is stored at $FFFC and $FFFD
+    int8_t low = memory[0xFFFC];
+    int8_t high = memory[0xFFFD];
+    int16_t address = absAdd(low, high);
+
+    programCounter = address;
+
+    // Continue execution as normal;
 }
