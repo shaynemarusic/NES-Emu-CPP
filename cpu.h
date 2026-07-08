@@ -132,6 +132,8 @@ class CPU {
         void JMP(uint16_t address);
         void JSR(uint16_t address);
         void RTS();
+        void BRK();
+        void RTI();
 
         //Addressing modes
         uint8_t Xind(uint8_t low);

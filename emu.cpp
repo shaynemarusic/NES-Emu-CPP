@@ -104,12 +104,28 @@ Emulator::Emulator(const char * filename) {
             }
         }
 
+        // Read CHR-ROM
+        // CHR-ROM is used by the PPU to fill the pattern table, hence I will just move on for now
+        // If CHR ROM is 0, CHR RAM is used
+        if (chr_rom != 0) {
+            // NEEDS TO BE REPLACED LATER
+            romFile.seekg(8192 * chr_rom, std::ios::cur);
+        }
+
+        // Lastly, there's PlayChoice ROM which is kinda niche, but will deal with anyway
+        // If the 1st bit of flag 7 is set, there's 8KB of additional data to read called INST ROM as well as
+        // 16 bytes of PROM Data output used to decrypt the INST and 16 bytes of PROM CounterOut output used similarly which is sometimes ignored
+        if (flag7 & 2 == 2) {
+            // NEEDS TO BE REPLACED LATER
+            romFile.seekg(8192, std::ios::cur);
+        }
+
+        // May be an additional bit of data at the end of file but it can be safely ignored
+
+        // Can now begin execution
+
         // Perform reset interrupt
         cpu.interrupt_reset();
-
-        // Read CHR-ROM
-
-
     }
     else {
 

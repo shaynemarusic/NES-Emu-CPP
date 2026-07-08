@@ -1,8 +1,40 @@
 #include "cpu.h"
 #include <unordered_map>
 
-std::unordered_map<uint8_t, uint8_t> pcIncrement = {
-    {0x01, 2}, {0x05, 2}, {0x09, 2}, {0x0D, 3}, {0x11, 2}, {0x15, 2}, {0x19, 3}, {0x1D, 3}
+// Table of all official instruction sizes
+constexpr uint8_t pcIncrement[256] = {
+    // 0x00
+    2,2,0,0,0,2,2,0,1,2,1,0,0,3,3,0,
+    // 0x10
+    2,2,0,0,0,2,2,0,1,3,0,0,0,3,3,0,
+    // 0x20
+    3,2,0,0,2,2,2,0,1,2,1,0,3,3,3,0,
+    // 0x30
+    2,2,0,0,0,2,2,0,1,3,0,0,0,3,3,0,
+    // 0x40
+    1,2,0,0,0,2,2,0,1,2,1,0,3,3,3,0,
+    // 0x50
+    2,2,0,0,0,2,2,0,1,3,0,0,0,3,3,0,
+    // 0x60
+    1,2,0,0,0,2,2,0,1,2,1,0,3,3,3,0,
+    // 0x70
+    2,2,0,0,0,2,2,0,1,3,0,0,0,3,3,0,
+    // 0x80
+    0,2,0,0,2,2,2,0,1,0,1,0,3,3,3,0,
+    // 0x90
+    2,2,0,0,2,2,2,0,1,3,1,0,0,3,0,0,
+    // 0xA0
+    2,2,2,0,2,2,2,0,1,2,1,0,3,3,3,0,
+    // 0xB0
+    2,2,0,0,2,2,2,0,1,3,1,0,3,3,3,0,
+    // 0xC0
+    2,2,0,0,2,2,2,0,1,2,1,0,3,3,3,0,
+    // 0xD0
+    2,2,0,0,0,2,2,0,1,3,0,0,0,3,3,0,
+    // 0xE0
+    2,2,0,0,2,2,2,0,1,2,1,0,3,3,3,0,
+    // 0xF0
+    2,2,0,0,0,2,2,0,1,3,0,0,0,3,3,0
 };
 
 //The main constructor
@@ -1134,8 +1166,10 @@ void CPU::PHA() {
 }
 
 //Push the status register onto the stack
+//Affects break flag and the fifth unused bit
 void CPU::PHP() {
 
+    statusRegister = statusRegister | 48;
     write(0x100 + stackPointer, (int8_t&)statusRegister);
     stackPointer--;
 
@@ -1182,6 +1216,25 @@ void CPU::RTS() {
 
     stackPointer += 2;
     programCounter = (((uint16_t) memory[0x100 + stackPointer - 1]) << 8) | memory[0x100 + stackPointer];
+
+}
+
+// Break Instruction -- triggers an IRQ (aka maskable interrupt)
+// Can be ignored if the interrupt disable flag is set
+// Though technically a 1 byte instruction, BRK is treated like a 2 byte instruction, and hence it is treated as such in the pcIncrement table
+void CPU::BRK() {
+    //Store program counter on the stack
+    int8_t high = programCounter >> 8;
+    int8_t low = programCounter & 15;
+    write(0x100 + stackPointer, low);
+    write(0x100 + stackPointer - 1, high);
+    stackPointer -= 2;
+
+    //Store the status register
+    PHP();
+
+    //Set interrupt disable
+    statusRegister = statusRegister | 4;
 
 }
 
