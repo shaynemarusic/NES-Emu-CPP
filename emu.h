@@ -14,8 +14,12 @@ class Emulator {
         //iNES header flags used for determining which memory mapper to use
         int flag6;
         int flag7;
+        bool running;
     public:
         Emulator(const char * filename);
+        Emulator();
+        void nes_test();
+        void run(const char * filename);
 };
 
 int main(int argc, char *argv []) {

@@ -1,7 +1,18 @@
 #include "emu.h"
 #include <iostream>
 
+Emulator::Emulator() {
+    running = false;
+    //Initialize PPU
+
+    //Initialize APU
+
+    //Initialize CPU
+    cpu = CPU();
+}
+
 Emulator::Emulator(const char * filename) {
+    running = false;
     //Initialize PPU
 
     //Initialize APU
@@ -126,10 +137,24 @@ Emulator::Emulator(const char * filename) {
 
         // Perform reset interrupt
         cpu.interrupt_reset();
+        running = true;
+
+        // Code execution -- need to add timing and some simulation of concurrency, but this should work for testing the CPU
+        while (running) {
+            cpu.decode();
+        }
+
+        romFile.close();
     }
     else {
 
         std::cout << "Error: ROM could not be opened. Please make sure the file path is correct." << std::endl;
 
     }
+}
+
+// Function that just runs Kevin Horton's nestest in automation mode and creates a log file
+void Emulator::nes_test() {
+    this->romFile.open("nestest.nes", std::ios::in | std::ios::binary | std::ios::ate);
+    
 }

@@ -108,11 +108,13 @@ class CPU {
         // void STY(uint16_t address);
 
         //Memory Map Write Functions - these will be used in place of the above ST* instructions
-        std::unordered_map<int, void (CPU::*) (uint16_t address, int8_t& val)> writes = {
-            {0, default_write}
-        };
-        void write(uint16_t address, int8_t& val);
         void default_write(uint16_t address, int8_t& val);
+
+        std::unordered_map<int, void (CPU::*) (uint16_t address, int8_t& val)> writes = {
+            {0, &CPU::default_write}
+        };
+
+        void write(uint16_t address, int8_t& val);
 
         //Transfer Instructions
         void TAX();
@@ -127,6 +129,7 @@ class CPU {
         void PHP();
         void PLA();
         void PLP();
+        void pushPC();
 
         //Control Instructions
         void JMP(uint16_t address);
@@ -162,6 +165,22 @@ class CPU {
         //~CPU();
         void decode();
         void interrupt_reset();
+        void interrupt_IRQ_generic();
+        void interrupt_NMI();
         std::unique_ptr<int8_t[]> memory;
+
+        //Setters/getters for cpu variables -- mostly used for testing/debugging
+        void set_PC(uint16_t pc);
+        uint16_t get_PC() const;
+        void set_accumulator(int8_t acc);
+        int8_t get_accumulator() const;
+        void set_status(uint8_t status);
+        uint8_t get_status() const;
+        void set_x(int8_t x);
+        int8_t get_x() const;
+        void set_y(int8_t y);
+        int8_t get_y() const;
+        void set_stack(uint8_t stack);
+        uint8_t get_stack() const;
 
 };
