@@ -58,19 +58,34 @@ CPU::CPU() {
     memory = std::unique_ptr<int8_t[]>(new int8_t[65536]);
     std::fill_n(this->memory.get(), 65536, 0);
 
-    stackPointer = 0xFF;
+    stackPointer = 0xFD;
     programCounter = 0xFFFC;
+    statusRegister = 36;
+    xReg = 0;
+    yReg = 0;
+    accumulator = 0;
 
     mem_map = 0;
+}
+
+// Used to reset the state of memory and other variables when a new ROM is loaded
+void CPU::manual_reset() {
+    std::fill_n(this->memory.get(), 65536, 0);
+    stackPointer = 0xFD;
+    programCounter = 0xFFFC;
+    mem_map = 0;
+    statusRegister = 36;
+    xReg = 0;
+    yReg = 0;
+    accumulator = 0;
 }
 
 //Decodes and executes instructions
 void CPU::decode() {
 
-    uint8_t opcode, high, low;
     opcode = memory[programCounter];
-    low = memory[programCounter + 1];
-    high = memory[programCounter + 2];
+    low_nibble = memory[programCounter + 1];
+    high_nibble = memory[programCounter + 2];
 
     //Need to add an additional check to see if the opcode is valid - will do later
     programCounter += pcIncrement[opcode];
@@ -103,15 +118,15 @@ void CPU::decode() {
             break;
         //ORA X, ind
         case 0x01:
-            ORA(Xind(low));
+            ORA(Xind(low_nibble));
             break;
         //ORA zpg
         case 0x05:
-            ORA(zpg(low));
+            ORA(zpg(low_nibble));
             break;
         //ASL zpg
         case 0x06:
-            ASL(zpgAdd(low));
+            ASL(zpgAdd(low_nibble));
             break;
         //PHP impl
         case 0x08:
@@ -119,7 +134,7 @@ void CPU::decode() {
             break;
         //ORA #
         case 0x09:
-            ORA(low);
+            ORA(low_nibble);
             break;
         //ASL A
         case 0x0A:
@@ -127,27 +142,27 @@ void CPU::decode() {
             break;
         //ORA abs
         case 0x0D:
-            ORA(abs(low, high));
+            ORA(abs(low_nibble, high_nibble));
             break;
         //ASL abs
         case 0x0E:
-            ASL(absAdd(low, high));
+            ASL(absAdd(low_nibble, high_nibble));
             break;
         //BPL rel
         case 0x10:
-            BPL(low);
+            BPL(low_nibble);
             break;
         //ORA ind, Y
         case 0x11:
-            ORA(indY(low));
+            ORA(indY(low_nibble));
             break;
         //ORA zpg, X
         case 0x15:
-            ORA(zpgX(low));
+            ORA(zpgX(low_nibble));
             break;
         //ASL zpg, X
         case 0x16:
-            ASL(zpgXAdd(low));
+            ASL(zpgXAdd(low_nibble));
             break;
         //CLC impl
         case 0x18:
@@ -155,35 +170,35 @@ void CPU::decode() {
             break;
         //ORA abs, Y
         case 0x19:
-            ORA(absY(low, high));
+            ORA(absY(low_nibble, high_nibble));
             break;
         //ORA abs, X
         case 0x1D:
-            ORA(absX(low, high));
+            ORA(absX(low_nibble, high_nibble));
             break;
         //ASL abs, X
         case 0x1E:
-            ASL(absXAdd(low, high));
+            ASL(absXAdd(low_nibble, high_nibble));
             break;
         //JSR abs
         case 0x20:
-            JSR(absAdd(low, high));
+            JSR(absAdd(low_nibble, high_nibble));
             break;
         //AND X, ind
         case 0x21:
-            AND(Xind(low));
+            AND(Xind(low_nibble));
             break;
         //BIT zpg
         case 0x24:
-            BIT(zpg(low));
+            BIT(zpg(low_nibble));
             break;
         //AND zpg
         case 0x25:
-            AND(zpg(low));
+            AND(zpg(low_nibble));
             break;
         //ROL zpg
         case 0x26:
-            ROL(zpgAdd(low));
+            ROL(zpgAdd(low_nibble));
             break;
         //PLP impl
         case 0x28:
@@ -191,7 +206,7 @@ void CPU::decode() {
             break;
         //AND #
         case 0x29:
-            AND(low);
+            AND(low_nibble);
             break;
         //ROL A
         case 0x2A:
@@ -199,31 +214,31 @@ void CPU::decode() {
             break;
         //BIT abs
         case 0x2C:
-            BIT(abs(low, high));
+            BIT(abs(low_nibble, high_nibble));
             break;
         //AND abs
         case 0x2D:
-            AND(abs(low, high));
+            AND(abs(low_nibble, high_nibble));
             break;
         //ROL abs
         case 0x2E:
-            ROL(absAdd(low, high));
+            ROL(absAdd(low_nibble, high_nibble));
             break;
         //BMI rel
         case 0x30:
-            BMI(low);
+            BMI(low_nibble);
             break;
         //AND ind, Y
         case 0x31:
-            AND(indY(low));
+            AND(indY(low_nibble));
             break;
         //AND zpg, X
         case 0x35:
-            AND(zpgX(low));
+            AND(zpgX(low_nibble));
             break;
         //ROL zpg, X
         case 0x36:
-            ROL(zpgXAdd(low));
+            ROL(zpgXAdd(low_nibble));
             break;
         //SEC impl
         case 0x38:
@@ -231,15 +246,15 @@ void CPU::decode() {
             break;
         //AND abs, Y
         case 0x39:
-            AND(absY(low, high));
+            AND(absY(low_nibble, high_nibble));
             break;
         //AND abs, X
         case 0x3D:
-            AND(absX(low, high));
+            AND(absX(low_nibble, high_nibble));
             break;
         //ROL abs, X
         case 0x3E:
-            ROL(absXAdd(low, high));
+            ROL(absXAdd(low_nibble, high_nibble));
             break;
         //RTI impl
         case 0x40:
@@ -247,15 +262,15 @@ void CPU::decode() {
             break;
         //EOR X, ind
         case 0x41:
-            EOR(Xind(low));
+            EOR(Xind(low_nibble));
             break;
         //EOR zpg
         case 0x45:
-            EOR(zpg(low));
+            EOR(zpg(low_nibble));
             break;
         //LSR zpg
         case 0x46:
-            LSR(zpgAdd(low));
+            LSR(zpgAdd(low_nibble));
             break;
         //PHA impl
         case 0x48:
@@ -263,7 +278,7 @@ void CPU::decode() {
             break;
         //EOR #
         case 0x49:
-            EOR(low);
+            EOR(low_nibble);
             break;
         //LSR A
         case 0x4A:
@@ -271,31 +286,31 @@ void CPU::decode() {
             break;
         //JMP abs
         case 0x4C:
-            JMP(absAdd(low, high));
+            JMP(absAdd(low_nibble, high_nibble));
             break;
         //EOR abs
         case 0x4D:
-            EOR(abs(low, high));
+            EOR(abs(low_nibble, high_nibble));
             break;
         //LSR abs
         case 0x4E:
-            LSR(absAdd(low, high));
+            LSR(absAdd(low_nibble, high_nibble));
             break;
         //BVC rel
         case 0x50:
-            BVC(low);
+            BVC(low_nibble);
             break;
         //EOR ind, Y
         case 0x51:
-            EOR(indY(low));
+            EOR(indY(low_nibble));
             break;
         //EOR zpg, X
         case 0x55:
-            EOR(zpgX(low));
+            EOR(zpgX(low_nibble));
             break;
         //LSR zpg, X
         case 0x56:
-            LSR(zpgXAdd(low));
+            LSR(zpgXAdd(low_nibble));
             break;
         //CLI impl
         case 0x58:
@@ -303,15 +318,15 @@ void CPU::decode() {
             break;
         //EOR abs, Y
         case 0x59:
-            EOR(absY(low, high));
+            EOR(absY(low_nibble, high_nibble));
             break;
         //EOR abs, X
         case 0x5D:
-            EOR(absX(low, high));
+            EOR(absX(low_nibble, high_nibble));
             break;
         //LSR abs, X
         case 0x5E:
-            LSR(absXAdd(low, high));
+            LSR(absXAdd(low_nibble, high_nibble));
             break;
         //RTS impl
         case 0x60:
@@ -319,15 +334,15 @@ void CPU::decode() {
             break;
         //ADC X, ind
         case 0x61:
-            ADC(Xind(low));
+            ADC(Xind(low_nibble));
             break;
         //ADC zpg
         case 0x65:
-            ADC(zpg(low));
+            ADC(zpg(low_nibble));
             break;
         //ROR zpg
         case 0x66:
-            ROR(zpgAdd(low));
+            ROR(zpgAdd(low_nibble));
             break;
         //PLA impl
         case 0x68:
@@ -335,7 +350,7 @@ void CPU::decode() {
             break;
         //ADC #
         case 0x69:
-            ADC(low);
+            ADC(low_nibble);
             break;
         //ROR A
         case 0x6A:
@@ -343,31 +358,31 @@ void CPU::decode() {
             break;
         //JMP ind
         case 0x6C:
-            JMP(indAdd(low, high));
+            JMP(indAdd(low_nibble, high_nibble));
             break;
         //ADC abs
         case 0x6D:
-            ADC(abs(low, high));
+            ADC(abs(low_nibble, high_nibble));
             break;
         //ROR abs
         case 0x6E:
-            ROR(absAdd(low, high));
+            ROR(absAdd(low_nibble, high_nibble));
             break;
         //BVS rel
         case 0x70:
-            BVS(low);
+            BVS(low_nibble);
             break;
         //ADC ind, Y
         case 0x71:
-            ADC(indY(low));
+            ADC(indY(low_nibble));
             break;
         //ADC zpg, X
         case 0x75:
-            ADC(zpgX(low));
+            ADC(zpgX(low_nibble));
             break;
         //ROR zpg, X
         case 0x76:
-            ROR(zpgXAdd(low));
+            ROR(zpgXAdd(low_nibble));
             break;
         //SEI impl
         case 0x78:
@@ -375,31 +390,31 @@ void CPU::decode() {
             break;
         //ADC abs, Y
         case 0x79:
-            ADC(absY(low, high));
+            ADC(absY(low_nibble, high_nibble));
             break;
         //ADC abs, X
         case 0x7D:
-            ADC(absX(low, high));
+            ADC(absX(low_nibble, high_nibble));
             break;
         //ROR abs, X
         case 0x7E:
-            ROR(absXAdd(low, high));
+            ROR(absXAdd(low_nibble, high_nibble));
             break;
         //STA X, ind
         case 0x81:
-            write(XindAdd(low), accumulator);
+            write(XindAdd(low_nibble), accumulator);
             break;
         //STY zpg
         case 0x84:
-            write(zpgAdd(low), yReg);
+            write(zpgAdd(low_nibble), yReg);
             break;
         //STA zpg:
         case 0x85:
-            write(zpgAdd(low), accumulator);
+            write(zpgAdd(low_nibble), accumulator);
             break;
         //STX zpg
         case 0x86:
-            write(zpgAdd(low), xReg);
+            write(zpgAdd(low_nibble), xReg);
             break;
         //DEY impl
         case 0x88:
@@ -411,35 +426,35 @@ void CPU::decode() {
             break;
         //STY abs
         case 0x8C:
-            write(absAdd(low, high), yReg);
+            write(absAdd(low_nibble, high_nibble), yReg);
             break;
         //STA abs
         case 0x8D:
-            write(absAdd(low, high), accumulator);
+            write(absAdd(low_nibble, high_nibble), accumulator);
             break;
         //STX abs
         case 0x8E:
-            write(absAdd(low, high), xReg);
+            write(absAdd(low_nibble, high_nibble), xReg);
             break;
         //BCC rel
         case 0x90:
-            BCC(low);
+            BCC(low_nibble);
             break;
         //STA ind, Y
         case 0x91:
-            write(indYAdd(low), accumulator);
+            write(indYAdd(low_nibble), accumulator);
             break;
         //STY zpg, X
         case 0x94:
-            write(zpgXAdd(low), yReg);
+            write(zpgXAdd(low_nibble), yReg);
             break;
         //STA zpg, X
         case 0x95:
-            write(zpgXAdd(low), accumulator);
+            write(zpgXAdd(low_nibble), accumulator);
             break;
         //STX zpg, Y
         case 0x96:
-            write(zpgYAdd(low), yReg);
+            write(zpgYAdd(low_nibble), yReg);
             break;
         //TYA impl
         case 0x98:
@@ -447,7 +462,7 @@ void CPU::decode() {
             break;
         //STA abs, Y
         case 0x99:
-            write(absYAdd(low, high), accumulator);
+            write(absYAdd(low_nibble, high_nibble), accumulator);
             break;
         //TXS impl
         case 0x9A:
@@ -455,31 +470,31 @@ void CPU::decode() {
             break;
         //STA abs, X
         case 0x9D:
-            write(absXAdd(low, high), accumulator);
+            write(absXAdd(low_nibble, high_nibble), accumulator);
             break;
         //LDY #
         case 0xA0:
-            LDY(low);
+            LDY(low_nibble);
             break;
         //LDA X, ind
         case 0xA1:
-            LDA(Xind(low));
+            LDA(Xind(low_nibble));
             break;
         //LDX #
         case 0xA2:
-            LDX(low);
+            LDX(low_nibble);
             break;
         //LDY zpg
         case 0xA4:
-            LDY(zpg(low));
+            LDY(zpg(low_nibble));
             break;
         //LDA zpg
         case 0xA5:
-            LDA(zpg(low));
+            LDA(zpg(low_nibble));
             break;
         //LDX zpg
         case 0xA6:
-            LDX(zpg(low));
+            LDX(zpg(low_nibble));
             break;
         //TAY impl
         case 0xA8:
@@ -487,7 +502,7 @@ void CPU::decode() {
             break;
         //LDA #
         case 0xA9:
-            LDA(low);
+            LDA(low_nibble);
             break;
         //TAX impl
         case 0xAA:
@@ -495,35 +510,35 @@ void CPU::decode() {
             break;
         //LDY abs
         case 0xAC:
-            LDY(abs(low, high));
+            LDY(abs(low_nibble, high_nibble));
             break;
         //LDA abs
         case 0xAD:
-            LDA(abs(low, high));
+            LDA(abs(low_nibble, high_nibble));
             break;
         //LDX abs
         case 0xAE:
-            LDX(abs(low, high));
+            LDX(abs(low_nibble, high_nibble));
             break;
         //BCS rel
         case 0xB0:
-            BCS(low);
+            BCS(low_nibble);
             break;
         //LDA ind, Y
         case 0xB1:
-            LDA(indY(low));
+            LDA(indY(low_nibble));
             break;
         //LDY zpg, X
         case 0xB4:
-            LDY(zpgX(low));
+            LDY(zpgX(low_nibble));
             break;
         //LDA zpg, X
         case 0xB5:
-            LDA(zpgX(low));
+            LDA(zpgX(low_nibble));
             break;
         //LDX zpg, Y
         case 0xB6:
-            LDX(zpgY(low));
+            LDX(zpgY(low_nibble));
             break;
         //CLV impl
         case 0xB8:
@@ -531,7 +546,7 @@ void CPU::decode() {
             break;
         //LDA abs, Y
         case 0xB9:
-            LDA(absY(low, high));
+            LDA(absY(low_nibble, high_nibble));
             break;
         //TSX impl
         case 0xBA:
@@ -539,35 +554,35 @@ void CPU::decode() {
             break;
         //LDY abs, X
         case 0xBC:
-            LDY(absX(low, high));
+            LDY(absX(low_nibble, high_nibble));
             break;
         //LDA abs, X
         case 0xBD:
-            LDA(absY(low, high));
+            LDA(absY(low_nibble, high_nibble));
             break;
         //LDX abs, Y
         case 0xBE:
-            LDX(absY(low, high));
+            LDX(absY(low_nibble, high_nibble));
             break;
         //CPY #
         case 0xC0:
-            CPY(low);
+            CPY(low_nibble);
             break;
         //CMP X, ind
         case 0xC1:
-            CMP(Xind(low));
+            CMP(Xind(low_nibble));
             break;
         //CPY zpg
         case 0xC4:
-            CPY(zpg(low));
+            CPY(zpg(low_nibble));
             break;
         //CMP zpg
         case 0xC5:
-            CMP(zpg(low));
+            CMP(zpg(low_nibble));
             break;
         //DEC zpg
         case 0xC6:
-            DEC(zpgAdd(low));
+            DEC(zpgAdd(low_nibble));
             break;
         //INY impl
         case 0xC8:
@@ -575,7 +590,7 @@ void CPU::decode() {
             break;
         //CMP #
         case 0xC9:
-            CMP(low);
+            CMP(low_nibble);
             break;
         //DEX impl
         case 0xCA:
@@ -583,31 +598,31 @@ void CPU::decode() {
             break;
         //CPY abs
         case 0xCC:
-            CPY(abs(low, high));
+            CPY(abs(low_nibble, high_nibble));
             break;
         //CMP abs
         case 0xCD:
-            CMP(abs(low, high));
+            CMP(abs(low_nibble, high_nibble));
             break;
         //DEC abs
         case 0xCE:
-            DEC(absAdd(low, high));
+            DEC(absAdd(low_nibble, high_nibble));
             break;
         //BNE rel
         case 0xD0:
-            BNE(low);
+            BNE(low_nibble);
             break;
         //CMP ind, Y
         case 0xD1:
-            CMP(indY(low));
+            CMP(indY(low_nibble));
             break;
         //CMP zpg, X
         case 0xD5:
-            CMP(zpgX(low));
+            CMP(zpgX(low_nibble));
             break;
         //DEC zpg, X
         case 0xD6:
-            DEC(zpgXAdd(low));
+            DEC(zpgXAdd(low_nibble));
             break;
         //CLD impl
         case 0xD8:
@@ -615,35 +630,35 @@ void CPU::decode() {
             break;
         //CMP abs, Y
         case 0xD9:
-            CMP(absY(low, high));
+            CMP(absY(low_nibble, high_nibble));
             break;
         //CMP abs, X
         case 0xDD:
-            CMP(absX(low, high));
+            CMP(absX(low_nibble, high_nibble));
             break;
         //DEC abs, X
         case 0xDE:
-            DEC(absXAdd(low, high));
+            DEC(absXAdd(low_nibble, high_nibble));
             break;
         //CPX #
         case 0xE0:
-            CPX(low);
+            CPX(low_nibble);
             break;
         //SBC X, ind
         case 0xE1:
-            SBC(Xind(low));
+            SBC(Xind(low_nibble));
             break;
         //CPX zpg
         case 0xE4:
-            CPX(zpg(low));
+            CPX(zpg(low_nibble));
             break;
         //SBC zpg
         case 0xE5:
-            SBC(zpg(low));
+            SBC(zpg(low_nibble));
             break;
         //INC zpg
         case 0xE6:
-            INC(zpgAdd(low));
+            INC(zpgAdd(low_nibble));
             break;
         //INX impl
         case 0xE8:
@@ -651,38 +666,38 @@ void CPU::decode() {
             break;
         //SBC #
         case 0xE9:
-            SBC(low);
+            SBC(low_nibble);
             break;
         //NOP impl
         case 0xEA:
             break;
         //CPX abs
         case 0xEC:
-            CPX(abs(low, high));
+            CPX(abs(low_nibble, high_nibble));
             break;
         //SBC abs
         case 0xED:
-            SBC(abs(low, high));
+            SBC(abs(low_nibble, high_nibble));
             break;
         //INC abs
         case 0xEE:
-            INC(absAdd(low, high));
+            INC(absAdd(low_nibble, high_nibble));
             break;
         //BEQ rel
         case 0xF0:
-            BEQ(low);
+            BEQ(low_nibble);
             break;
         //SBC ind, Y
         case 0xF1:
-            SBC(indY(low));
+            SBC(indY(low_nibble));
             break;
         //SBC zpg, X
         case 0xF5:
-            SBC(zpgX(low));
+            SBC(zpgX(low_nibble));
             break;
         //INC zpg, X
         case 0xF6:
-            INC(zpgXAdd(low));
+            INC(zpgXAdd(low_nibble));
             break;
         //SED impl
         case 0xF8:
@@ -690,15 +705,15 @@ void CPU::decode() {
             break;
         //SBC abs, Y
         case 0xF9:
-            SBC(absY(low, high));
+            SBC(absY(low_nibble, high_nibble));
             break;
         //SBC abs, X
         case 0xFD:
-            SBC(absX(low, high));
+            SBC(absX(low_nibble, high_nibble));
             break;
         //INC abs, X
         case 0xFE:
-            INC(absXAdd(low, high));
+            INC(absXAdd(low_nibble, high_nibble));
             break;
         default:
             //Throw an exception - ADD LATER
@@ -1393,3 +1408,19 @@ int8_t CPU::get_y() const { return yReg; }
 void CPU::set_stack(uint8_t stack) { stackPointer = stack; }
 
 uint8_t CPU::get_stack() const { return stackPointer; }
+
+void CPU::set_memMap(int memory_map) { mem_map = memory_map; }
+
+int CPU::get_memMap() const { return mem_map; }
+
+void CPU::set_opcode(uint8_t op) { opcode = op; }
+
+uint8_t CPU::get_opcode() const { return opcode; }
+
+void CPU::set_high_nibble(uint8_t nibble) { high_nibble = nibble; }
+
+uint8_t CPU::get_high_nibble() const { return high_nibble; }
+
+void CPU::set_low_nibble(uint8_t nibble) { low_nibble = nibble; }
+
+uint8_t CPU::get_low_nibble() const { return low_nibble; }

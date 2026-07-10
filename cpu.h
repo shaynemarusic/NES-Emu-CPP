@@ -31,6 +31,8 @@ class CPU {
         //Like the X register but cannot affect the stack pointer
         int8_t yReg;
         int mem_map;
+        // Opcode and operand vars
+        uint8_t opcode, high_nibble, low_nibble;
         //This may or may not be necessary
 
         //Memory
@@ -161,6 +163,7 @@ class CPU {
     public:
         CPU(int memory_mapper);
         CPU();
+        void manual_reset();
         //Destructor may or may not be needed. Depends on implementation details yet to be ironed out
         //~CPU();
         void decode();
@@ -182,5 +185,13 @@ class CPU {
         int8_t get_y() const;
         void set_stack(uint8_t stack);
         uint8_t get_stack() const;
+        void set_memMap(int memory_mapper);
+        int get_memMap() const;
+        void set_opcode(uint8_t op);
+        uint8_t get_opcode() const;
+        void set_high_nibble(uint8_t nibble);
+        uint8_t get_high_nibble() const;
+        void set_low_nibble(uint8_t nibble);
+        uint8_t get_low_nibble() const;
 
 };
