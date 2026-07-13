@@ -578,6 +578,7 @@ void Emulator::nes_test() {
 
         test_log << opcodeName[op_int];
         AddressingMode mode = opcodeMode[op_int];
+        uint16_t exp, ind_add;
         switch (mode) {
             case AddressingMode::IMP:
                 test_log << std::setw(33);
@@ -606,11 +607,33 @@ void Emulator::nes_test() {
             case AddressingMode::ABSY:
                 test_log << " $" << hi << low << ",Y @ " << hex(((((uint16_t) cpu.get_high_nibble()) << 8) | cpu.get_low_nibble()) + cpu.get_y(), 4) << " = " << std::setw(13);
                 break;
-            case AddressingMode::IND:
+            case AddressingMode::IND: 
+                exp = ((uint16_t) cpu.get_high_nibble() << 8) | cpu.get_low_nibble();
+                test_log << " ($" << hi << low << ") = " << hex(((uint16_t) cpu.memory[exp + 1] << 8) | cpu.memory[exp], 4) << std::setw(18);
                 break;
-
+            case AddressingMode::INDX:
+                exp = (cpu.get_low_nibble() + cpu.get_x()) & 0xFF;
+                ind_add = ((uint16_t) cpu.memory[exp + 1] << 8) | cpu.memory[exp];
+                test_log << " ($" << low << ",X) @ " << hex(exp, 2) << " = " << hex(ind_add, 4) << " = " << hex(cpu.memory[ind_add], 2) << std::setw(8);
+                break;
+            case AddressingMode::INDY:
+                exp = (((uint16_t) cpu.memory[cpu.get_low_nibble() + 1] << 8) | cpu.memory[cpu.get_low_nibble()]);
+                ind_add = exp + cpu.get_y();
+                test_log << " ($" << low << "),Y = " << hex(exp, 4) << " @ " << hex(ind_add, 4) << " = " << hex(cpu.memory[ind_add], 2) << std::setw(6);
+                break;
+            case AddressingMode::REL:
+                exp = cpu.get_PC() + cpu.get_low_nibble();
+                test_log << " $" << hex(exp, 4) << std::setw(27);
+                break;
         }
+
+        // Write state of registers
+        test_log << "A:" << acc << " X:" << x << " Y:" << y << " P:" << p << " SP:" << sp << std::endl;
+
+        // TODO: Add PPU and cycle info
     }
+
+    romFile.close();
 }
 
 // Helper function for writing log files
