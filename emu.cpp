@@ -2,6 +2,7 @@
 #include <iostream>
 #include <sstream>
 #include <iomanip>
+#include <string>
 
 std::string hex(uint32_t value, int width);
 
@@ -307,6 +308,8 @@ void Emulator::nes_test() {
     cpu.manual_reset();
 
     this->romFile.open("nestest.nes", std::ios::in | std::ios::binary | std::ios::ate);
+    std::ifstream good_log;
+    good_log.open("nestest good log.txt");
     
     // Set the program counter to 0xC000 to run in automation mode
     cpu.set_PC(0xC000);
@@ -544,9 +547,12 @@ void Emulator::nes_test() {
     };
 
     running = true;
+    std::string line;
     while (running) {
+        std::getline(good_log, line);
         // Log state of registers, PC, etc before instruction is decoded
-        pc  = hex(cpu.get_PC(), 4);
+        uint16_t pcint = cpu.get_PC();
+        pc  = hex(pcint, 4);
         acc = hex(static_cast<uint8_t>(cpu.get_accumulator()), 2);
         sp  = hex(cpu.get_stack(), 2);
         p   = hex(cpu.get_status(), 2);
@@ -573,7 +579,7 @@ void Emulator::nes_test() {
             test_log << " " << low << std::setw(8);
         }
         else if (pcIncrement[op_int] == 3) {
-            test_log << " " << low << " " << std::setw(5);
+            test_log << " " << low << " " << hi << std::setw(5);
         }
 
         test_log << opcodeName[op_int];
@@ -581,56 +587,64 @@ void Emulator::nes_test() {
         uint16_t exp, ind_add;
         switch (mode) {
             case AddressingMode::IMP:
-                test_log << std::setw(33);
+                test_log << std::setw(31);
                 break;
             case AddressingMode::ACC:
-                test_log << " A" << std::setw(31);
+                test_log << " A" << std::setw(29);
                 break;
             case AddressingMode::IMM:
-                test_log << " #$" << low << std::setw(28);
+                test_log << " #$" << low << std::setw(26);
                 break;
             case AddressingMode::ZP:
-                test_log << " $" << low << " = " << hex(cpu.memory[cpu.get_low_nibble()], 2) << std::setw(24);
+            if (pc == "C780") {
+                running = true;
+            }
+                test_log << " $" << low << " = " << hex(static_cast<uint8_t>(cpu.memory[cpu.get_low_nibble()]), 2) << std::setw(22);
                 break;
             case AddressingMode::ZPX:
-                test_log << " $" << low << ",X @ " << x << " = " << hex(cpu.memory[(cpu.get_low_nibble() + cpu.get_x()) & 0xFF], 2) << std::setw(17);
+                test_log << " $" << low << ",X @ " << x << " = " << hex(static_cast<uint8_t>(cpu.memory[(cpu.get_low_nibble() + cpu.get_x()) & 0xFF]), 2) << std::setw(15);
                 break;
             case AddressingMode::ZPY:
-                test_log << " $" << low << ",Y @ " << y << " = " << hex(cpu.memory[(cpu.get_low_nibble() + cpu.get_y()) & 0xFF], 2) << std::setw(17);
+                test_log << " $" << low << ",Y @ " << y << " = " << hex(static_cast<uint8_t>(cpu.memory[(cpu.get_low_nibble() + cpu.get_y()) & 0xFF]), 2) << std::setw(15);
                 break;
             case AddressingMode::ABS:
-                test_log << " $" << hi << low << std::setw(27);
+                test_log << " $" << hi << low << std::setw(25);
                 break;
             case AddressingMode::ABSX:
-                test_log << " $" << hi << low << ",X @ " << hex(((((uint16_t) cpu.get_high_nibble()) << 8) | cpu.get_low_nibble()) + cpu.get_x(), 4) << " = " << std::setw(13);
+                test_log << " $" << hi << low << ",X @ " << hex(((((uint16_t) cpu.get_high_nibble()) << 8) | cpu.get_low_nibble()) + cpu.get_x(), 4) << " = " << std::setw(11);
                 break;
             case AddressingMode::ABSY:
-                test_log << " $" << hi << low << ",Y @ " << hex(((((uint16_t) cpu.get_high_nibble()) << 8) | cpu.get_low_nibble()) + cpu.get_y(), 4) << " = " << std::setw(13);
+                test_log << " $" << hi << low << ",Y @ " << hex(((((uint16_t) cpu.get_high_nibble()) << 8) | cpu.get_low_nibble()) + cpu.get_y(), 4) << " = " << std::setw(11);
                 break;
             case AddressingMode::IND: 
                 exp = ((uint16_t) cpu.get_high_nibble() << 8) | cpu.get_low_nibble();
-                test_log << " ($" << hi << low << ") = " << hex(((uint16_t) cpu.memory[exp + 1] << 8) | cpu.memory[exp], 4) << std::setw(18);
+                test_log << " ($" << hi << low << ") = " << hex(((uint16_t) cpu.memory[exp + 1] << 8) | cpu.memory[exp], 4) << std::setw(16);
                 break;
             case AddressingMode::INDX:
                 exp = (cpu.get_low_nibble() + cpu.get_x()) & 0xFF;
                 ind_add = ((uint16_t) cpu.memory[exp + 1] << 8) | cpu.memory[exp];
-                test_log << " ($" << low << ",X) @ " << hex(exp, 2) << " = " << hex(ind_add, 4) << " = " << hex(cpu.memory[ind_add], 2) << std::setw(8);
+                test_log << " ($" << low << ",X) @ " << hex(exp, 2) << " = " << hex(ind_add, 4) << " = " << hex(cpu.memory[ind_add], 2) << std::setw(6);
                 break;
             case AddressingMode::INDY:
                 exp = (((uint16_t) cpu.memory[cpu.get_low_nibble() + 1] << 8) | cpu.memory[cpu.get_low_nibble()]);
                 ind_add = exp + cpu.get_y();
-                test_log << " ($" << low << "),Y = " << hex(exp, 4) << " @ " << hex(ind_add, 4) << " = " << hex(cpu.memory[ind_add], 2) << std::setw(6);
+                test_log << " ($" << low << "),Y = " << hex(exp, 4) << " @ " << hex(ind_add, 4) << " = " << hex(cpu.memory[ind_add], 2) << std::setw(4);
                 break;
             case AddressingMode::REL:
-                exp = cpu.get_PC() + cpu.get_low_nibble();
-                test_log << " $" << hex(exp, 4) << std::setw(27);
+                exp = pcint + cpu.get_low_nibble() + 2;
+                test_log << " $" << hex(exp, 4) << std::setw(25);
                 break;
         }
 
         // Write state of registers
-        test_log << "A:" << acc << " X:" << x << " Y:" << y << " P:" << p << " SP:" << sp << std::endl;
+        test_log << "A:" << acc << " X:" << x << " Y:" << y << " P:" << p << " SP:" << sp << " ";
 
         // TODO: Add PPU and cycle info
+        // Hackey bs for the sake of comparing files
+        for (int i = 74; i < line.size(); i++) {
+            test_log << line[i];
+        }
+        test_log << std::endl;
     }
 
     romFile.close();

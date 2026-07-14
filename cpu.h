@@ -1,6 +1,8 @@
 #pragma once
 #include <cstdint>
 #include <fstream>
+#include <unordered_map>
+#include <memory>
 
 //This class represents the CPU (duh). The NES used the Ricoh 2AO3 which was a slightly modified MOS 6502
 class CPU {

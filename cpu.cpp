@@ -1,5 +1,7 @@
 #include "cpu.h"
 #include <unordered_map>
+#include <stdexcept>
+#include <string>
 
 // Table of all official instruction sizes
 constexpr uint8_t pcIncrement[256] = {
@@ -717,6 +719,7 @@ void CPU::decode() {
             break;
         default:
             //Throw an exception - ADD LATER
+            throw std::invalid_argument("Error: Invalid opcode " + std::to_string(opcode) + " decoded");
         
     }
 
@@ -1286,6 +1289,10 @@ void CPU::RTI() {
 void CPU::write(uint16_t address, int8_t& val) {
     // Mirror in correct location
     // Three mirrors in this range
+    if (address == 0x01) {
+        stackPointer++;
+        stackPointer--;
+    }
     if (address <= 0x1FFF) {
         uint16_t mirror = (address + 0x800) % 0x2000;
         memory[mirror] = val;

@@ -16,20 +16,8 @@ class Emulator {
         int flag7;
         bool running;
     public:
-        Emulator(const char * filename);
+        //Emulator(const char * filename);
         Emulator();
         void nes_test();
         void run(const char * filename);
 };
-
-int main(int argc, char *argv []) {
-    /*
-    Steps:
-    Instantiate 'parts' of the emulator
-    Load the ROM/program into emulator memory
-    Enter while loop where:
-        listen for interrupts
-        decode and execute instructions
-    */
-    return 0;
-}
