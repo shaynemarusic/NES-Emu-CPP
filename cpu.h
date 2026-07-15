@@ -70,7 +70,7 @@ class CPU {
         void RORA();
 
         //Arithmetic Instructions
-        void ADC(int8_t operand);
+        void ADC(uint8_t operand);
         void SBC(int8_t operand);
         void CMP(int8_t operand);
         void CPX(int8_t operand);
@@ -195,5 +195,8 @@ class CPU {
         uint8_t get_high_nibble() const;
         void set_low_nibble(uint8_t nibble);
         uint8_t get_low_nibble() const;
+        uint8_t get_next_low_nibble() const;
+        uint8_t get_next_high_nibble() const;
+        uint8_t get_next_opcode() const;
 
 };

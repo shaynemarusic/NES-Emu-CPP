@@ -844,7 +844,8 @@ void CPU::EOR(uint8_t operand) {
 //Bit test instruction
 //Sets the sign and overflow flags equal to the 7th and 6th bits of the operand resp. (using a 0 based index)
 //Sets the zero flag if the bitwise AND of the operand and the accumulator is 0 (the result of the AND is not stored anywhere)
-void CPU::BIT(uint8_t operand) { statusRegister = (operand & 0xC0) | (accumulator & operand == 0 ? 0x2 : 0) | (statusRegister & 0x3D); }
+void CPU::BIT(uint8_t operand) { 
+    statusRegister = (operand & 0xC0) | ((accumulator & operand) == 0 ? 0x2 : 0) | (statusRegister & 0x3D); }
 
 //Shift Instructions
 
@@ -932,10 +933,10 @@ void CPU::RORA() {
 //Adds the operand and carry from previous instruction to the accumulator and store the result in the accumulator
 //This instruction behaves differently in Decimal Mode but the NES does not implement Decimal Mode so we don't care
 //Sets the zero, overflow, carry, and sign flags when applicable
-void CPU::ADC(int8_t operand) {
+void CPU::ADC(uint8_t operand) {
 
-    int16_t temp = accumulator + (statusRegister & 0x1) + operand;
-    statusRegister = ((temp > 127 || temp < -128) ? 0x40 : 0) | (temp == 0 ? 0x2 : 0) | (temp & 0x80) | (temp > 255 ? 0x1 : 0) | (statusRegister & 0x3C);
+    int16_t temp = (uint8_t)accumulator + (statusRegister & 0x1) + operand;
+    statusRegister = (((temp ^ accumulator) & (temp ^ operand) & 0x80) == 0x80 ? 0x40 : 0) | ((temp & 0xFF) == 0 ? 0x2 : 0) | (temp & 0x80) | ((temp & 0x100) == 0x100 ? 0x1 : 0) | (statusRegister & 0x3C);
     accumulator = temp & 0xFF;
 
 }
@@ -1092,7 +1093,6 @@ void CPU::BVS(int8_t operand) { programCounter += (statusRegister & 0x40) == 0x4
 //Load Accumulator with the operand
 //Affects sign and zero flags
 void CPU::LDA(uint8_t operand) {
-
     accumulator = operand;
     statusRegister = (accumulator & 0x80) | (accumulator == 0 ? 0x2 : 0) | (statusRegister & 0x7D);
 
@@ -1189,8 +1189,8 @@ void CPU::PHA() {
 //Affects break flag and the fifth unused bit
 void CPU::PHP() {
 
-    statusRegister = statusRegister | 48;
-    write(0x100 + stackPointer, (int8_t&)statusRegister);
+    uint8_t val = statusRegister | 48;
+    write(0x100 + stackPointer, (int8_t&)val);
     stackPointer--;
 
 }
@@ -1206,10 +1206,11 @@ void CPU::PLA() {
 }
 
 //Pull the contents of the stack and put in the status register
+// Ignore the break flag (e.g. set it to 0)
 void CPU::PLP() {
 
     stackPointer++;
-    statusRegister = memory[0x100 + stackPointer];
+    statusRegister = memory[0x100 + stackPointer] & 0xEF | 0x20;
 
 }
 
@@ -1289,10 +1290,6 @@ void CPU::RTI() {
 void CPU::write(uint16_t address, int8_t& val) {
     // Mirror in correct location
     // Three mirrors in this range
-    if (address == 0x01) {
-        stackPointer++;
-        stackPointer--;
-    }
     if (address <= 0x1FFF) {
         uint16_t mirror = (address + 0x800) % 0x2000;
         memory[mirror] = val;
@@ -1347,7 +1344,7 @@ void CPU::interrupt_reset() {
 // This is essentially the same as BRK, however, IRQs that aren't raised by BRK don't set the B flag; this behavior is rarely used,
 // but worth acknowledging
 void CPU::interrupt_IRQ_generic() {
-    if (statusRegister & 4 == 4) {
+    if ((statusRegister & 4) == 4) {
         return;
     }
 
@@ -1431,3 +1428,9 @@ uint8_t CPU::get_high_nibble() const { return high_nibble; }
 void CPU::set_low_nibble(uint8_t nibble) { low_nibble = nibble; }
 
 uint8_t CPU::get_low_nibble() const { return low_nibble; }
+
+uint8_t CPU::get_next_low_nibble() const { return memory[programCounter + 1]; }
+
+uint8_t CPU::get_next_high_nibble() const { return memory[programCounter + 2]; }
+
+uint8_t CPU::get_next_opcode() const { return memory[programCounter]; }

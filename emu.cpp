@@ -558,20 +558,17 @@ void Emulator::nes_test() {
         p   = hex(cpu.get_status(), 2);
         x   = hex(static_cast<uint8_t>(cpu.get_x()), 2);
         y   = hex(static_cast<uint8_t>(cpu.get_y()), 2);
-        
-        // Decode and execute instruction
-        cpu.decode();
 
         // Log values of opcode and operands
-        op = hex(cpu.get_opcode(), 2);
-        hi  = hex(cpu.get_high_nibble(), 2);
-        low = hex(cpu.get_low_nibble(), 2);
+        op = hex(cpu.get_next_opcode(), 2);
+        hi  = hex(cpu.get_next_high_nibble(), 2);
+        low = hex(cpu.get_next_low_nibble(), 2);
 
         // Write to log file
         test_log << pc << std::setw(4);
         // Next part is opcode dependent
         test_log << op;
-        int op_int = cpu.get_opcode();
+        int op_int = cpu.get_next_opcode();
         if (pcIncrement[op_int] == 1) {
             test_log << std::setw(11);
         }
@@ -596,45 +593,45 @@ void Emulator::nes_test() {
                 test_log << " #$" << low << std::setw(26);
                 break;
             case AddressingMode::ZP:
-            if (pc == "C780") {
-                running = true;
-            }
-                test_log << " $" << low << " = " << hex(static_cast<uint8_t>(cpu.memory[cpu.get_low_nibble()]), 2) << std::setw(22);
+                test_log << " $" << low << " = " << hex(static_cast<uint8_t>(cpu.memory[cpu.get_next_low_nibble()]), 2) << std::setw(22);
                 break;
             case AddressingMode::ZPX:
-                test_log << " $" << low << ",X @ " << x << " = " << hex(static_cast<uint8_t>(cpu.memory[(cpu.get_low_nibble() + cpu.get_x()) & 0xFF]), 2) << std::setw(15);
+                test_log << " $" << low << ",X @ " << x << " = " << hex(static_cast<uint8_t>(cpu.memory[(cpu.get_next_low_nibble() + cpu.get_x()) & 0xFF]), 2) << std::setw(15);
                 break;
             case AddressingMode::ZPY:
-                test_log << " $" << low << ",Y @ " << y << " = " << hex(static_cast<uint8_t>(cpu.memory[(cpu.get_low_nibble() + cpu.get_y()) & 0xFF]), 2) << std::setw(15);
+                test_log << " $" << low << ",Y @ " << y << " = " << hex(static_cast<uint8_t>(cpu.memory[(cpu.get_next_low_nibble() + cpu.get_y()) & 0xFF]), 2) << std::setw(15);
                 break;
             case AddressingMode::ABS:
                 test_log << " $" << hi << low << std::setw(25);
                 break;
             case AddressingMode::ABSX:
-                test_log << " $" << hi << low << ",X @ " << hex(((((uint16_t) cpu.get_high_nibble()) << 8) | cpu.get_low_nibble()) + cpu.get_x(), 4) << " = " << std::setw(11);
+                test_log << " $" << hi << low << ",X @ " << hex(((((uint16_t) cpu.get_next_high_nibble()) << 8) | cpu.get_next_low_nibble()) + cpu.get_x(), 4) << " = " << std::setw(11);
                 break;
             case AddressingMode::ABSY:
-                test_log << " $" << hi << low << ",Y @ " << hex(((((uint16_t) cpu.get_high_nibble()) << 8) | cpu.get_low_nibble()) + cpu.get_y(), 4) << " = " << std::setw(11);
+                test_log << " $" << hi << low << ",Y @ " << hex(((((uint16_t) cpu.get_next_high_nibble()) << 8) | cpu.get_next_low_nibble()) + cpu.get_y(), 4) << " = " << std::setw(11);
                 break;
             case AddressingMode::IND: 
-                exp = ((uint16_t) cpu.get_high_nibble() << 8) | cpu.get_low_nibble();
+                exp = ((uint16_t) cpu.get_next_high_nibble() << 8) | cpu.get_next_low_nibble();
                 test_log << " ($" << hi << low << ") = " << hex(((uint16_t) cpu.memory[exp + 1] << 8) | cpu.memory[exp], 4) << std::setw(16);
                 break;
             case AddressingMode::INDX:
-                exp = (cpu.get_low_nibble() + cpu.get_x()) & 0xFF;
+                exp = (cpu.get_next_low_nibble() + cpu.get_x()) & 0xFF;
                 ind_add = ((uint16_t) cpu.memory[exp + 1] << 8) | cpu.memory[exp];
                 test_log << " ($" << low << ",X) @ " << hex(exp, 2) << " = " << hex(ind_add, 4) << " = " << hex(cpu.memory[ind_add], 2) << std::setw(6);
                 break;
             case AddressingMode::INDY:
-                exp = (((uint16_t) cpu.memory[cpu.get_low_nibble() + 1] << 8) | cpu.memory[cpu.get_low_nibble()]);
+                exp = (((uint16_t) cpu.memory[cpu.get_next_low_nibble() + 1] << 8) | cpu.memory[cpu.get_next_low_nibble()]);
                 ind_add = exp + cpu.get_y();
                 test_log << " ($" << low << "),Y = " << hex(exp, 4) << " @ " << hex(ind_add, 4) << " = " << hex(cpu.memory[ind_add], 2) << std::setw(4);
                 break;
             case AddressingMode::REL:
-                exp = pcint + cpu.get_low_nibble() + 2;
+                exp = pcint + cpu.get_next_low_nibble() + 2;
                 test_log << " $" << hex(exp, 4) << std::setw(25);
                 break;
         }
+
+        // Decode and execute instruction
+        cpu.decode();
 
         // Write state of registers
         test_log << "A:" << acc << " X:" << x << " Y:" << y << " P:" << p << " SP:" << sp << " ";
