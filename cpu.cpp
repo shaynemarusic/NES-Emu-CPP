@@ -10,7 +10,7 @@ constexpr uint8_t pcIncrement[256] = {
     // 0x10
     2,2,0,0,0,2,2,0,1,3,0,0,0,3,3,0,
     // 0x20
-    3,2,0,0,2,2,2,0,1,2,1,0,3,3,3,0,
+    2,2,0,0,2,2,2,0,1,2,1,0,3,3,3,0,
     // 0x30
     2,2,0,0,0,2,2,0,1,3,0,0,0,3,3,0,
     // 0x40
@@ -1163,7 +1163,7 @@ void CPU::TXA() {
 void CPU::TXS() {
 
     stackPointer = xReg;
-    statusRegister = (stackPointer & 0x80) | (stackPointer == 0 ? 0x2 : 0) | (stackPointer & 0x7D);
+    //statusRegister = (stackPointer & 0x80) | (stackPointer == 0 ? 0x2 : 0) | (stackPointer & 0x7D);
 
 }
 
@@ -1199,6 +1199,10 @@ void CPU::PHP() {
 //Affects sign and zero flags
 void CPU::PLA() {
 
+    if (programCounter == 0xce43) {
+        programCounter++;
+        programCounter--;
+    }
     stackPointer++;
     accumulator = memory[0x100 + stackPointer];
     statusRegister = statusRegister = (accumulator & 0x80) | (accumulator == 0 ? 0x2 : 0) | (statusRegister & 0x7D);
@@ -1234,8 +1238,8 @@ void CPU::JSR(uint16_t address) {
 
     int8_t low = programCounter;
     int8_t high = programCounter >> 8;
-    write(0x100 + stackPointer, low);
-    write(0x100 + stackPointer - 1, high);
+    write(0x100 + stackPointer, high);
+    write(0x100 + stackPointer - 1, low);
     stackPointer -= 2;
     programCounter = address;
 
@@ -1244,8 +1248,13 @@ void CPU::JSR(uint16_t address) {
 //Return from subroutine
 void CPU::RTS() {
 
+    if (programCounter == 0xc7db) {
+        programCounter++;
+        programCounter--;
+    }
     stackPointer += 2;
-    programCounter = (((uint16_t) memory[0x100 + stackPointer - 1]) << 8) | ((uint16_t) memory[0x100 + stackPointer] & 0xFF);
+    programCounter = ((((uint16_t) memory[0x100 + stackPointer]) << 8) | ((uint16_t) memory[0x100 + stackPointer - 1] & 0xFF));
+    programCounter++;
 
 }
 
@@ -1290,6 +1299,10 @@ void CPU::RTI() {
 void CPU::write(uint16_t address, int8_t& val) {
     // Mirror in correct location
     // Three mirrors in this range
+    if (address == 0x17f) {
+        programCounter++;
+        programCounter--;
+    }
     if (address <= 0x1FFF) {
         uint16_t mirror = (address + 0x800) % 0x2000;
         memory[mirror] = val;

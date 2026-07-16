@@ -445,7 +445,8 @@ void Emulator::nes_test() {
     IND,
     INDX,
     INDY,
-    REL
+    REL,
+    STABS
     };
 
     constexpr AddressingMode opcodeMode[256] = {
@@ -501,7 +502,7 @@ void Emulator::nes_test() {
     AddressingMode::IMM,  AddressingMode::INDX, AddressingMode::IMM,  AddressingMode::INDX,
     AddressingMode::ZP,   AddressingMode::ZP,   AddressingMode::ZP,   AddressingMode::ZP,
     AddressingMode::IMP,  AddressingMode::IMM,  AddressingMode::IMP,  AddressingMode::IMM,
-    AddressingMode::ABS,  AddressingMode::ABS,  AddressingMode::ABS,  AddressingMode::ABS,
+    AddressingMode::STABS,  AddressingMode::STABS,  AddressingMode::STABS,  AddressingMode::ABS,
 
     // 0x90
     AddressingMode::REL,  AddressingMode::INDY, AddressingMode::IMP,  AddressingMode::INDY,
@@ -513,7 +514,7 @@ void Emulator::nes_test() {
     AddressingMode::IMM,  AddressingMode::INDX, AddressingMode::IMM,  AddressingMode::INDX,
     AddressingMode::ZP,   AddressingMode::ZP,   AddressingMode::ZP,   AddressingMode::ZP,
     AddressingMode::IMP,  AddressingMode::IMM,  AddressingMode::IMP,  AddressingMode::IMM,
-    AddressingMode::ABS,  AddressingMode::ABS,  AddressingMode::ABS,  AddressingMode::ABS,
+    AddressingMode::ABS,  AddressingMode::STABS,  AddressingMode::STABS,  AddressingMode::ABS,
 
     // 0xB0
     AddressingMode::REL,  AddressingMode::INDY, AddressingMode::IMP,  AddressingMode::INDY,
@@ -627,6 +628,10 @@ void Emulator::nes_test() {
             case AddressingMode::REL:
                 exp = pcint + cpu.get_next_low_nibble() + 2;
                 test_log << " $" << hex(exp, 4) << std::setw(25);
+                break;
+            case AddressingMode::STABS:
+                exp = ((uint16_t) cpu.get_next_high_nibble() << 8) | cpu.get_next_low_nibble();
+                test_log << " $" << hi << low << " = " << hex(static_cast<uint8_t>(cpu.memory[exp]), 2) << std::setw(20);
                 break;
         }
 
