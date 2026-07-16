@@ -617,7 +617,7 @@ void Emulator::nes_test() {
                 break;
             case AddressingMode::INDX:
                 exp = (cpu.get_next_low_nibble() + cpu.get_x()) & 0xFF;
-                ind_add = ((uint16_t) cpu.memory[exp + 1] << 8) | cpu.memory[exp];
+                ind_add = ((uint16_t) cpu.memory[(exp + 1) & 0xFF] << 8) | cpu.memory[exp];
                 test_log << " ($" << low << ",X) @ " << hex(exp, 2) << " = " << hex(ind_add, 4) << " = " << hex(cpu.memory[ind_add], 2) << std::setw(6);
                 break;
             case AddressingMode::INDY:
