@@ -71,10 +71,10 @@ class CPU {
 
         //Arithmetic Instructions
         void ADC(uint8_t operand);
-        void SBC(int8_t operand);
-        void CMP(int8_t operand);
-        void CPX(int8_t operand);
-        void CPY(int8_t operand);
+        void SBC(uint8_t operand);
+        void CMP(uint8_t operand);
+        void CPX(uint8_t operand);
+        void CPY(uint8_t operand);
 
         //Increment Instructions
         void DEC(uint16_t address);

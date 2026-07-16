@@ -945,10 +945,10 @@ void CPU::ADC(uint8_t operand) {
 //Subtracts the operand and the complement of the carry flag from the accumulator and stores the result in the accumulator
 //Sets the zero, overflow, carry, and sign flags when applicable
 //Carry flag is set if the result is greater than or equal to 0
-void CPU::SBC(int8_t operand) {
+void CPU::SBC(uint8_t operand) {
 
-    int16_t temp = accumulator - operand - (~statusRegister & 0x1);
-    statusRegister = ((temp > 127 || temp < -128) ? 0x40 : 0) | (temp == 0 ? 0x2 : 0) | (temp & 0x80) | (temp >= 0 ? 0x1 : 0) | (statusRegister & 0x3C);
+    int16_t temp = (uint8_t)accumulator - operand - (~statusRegister & 0x1);
+    statusRegister = (((accumulator ^ operand) & (accumulator ^ temp) & 0x80) == 0x80 ? 0x40 : 0) | (temp == 0 ? 0x2 : 0) | (temp & 0x80) | (temp >= 0 ? 0x1 : 0) | (statusRegister & 0x3C);
     accumulator = temp & 0xFF;
 
 }
@@ -957,25 +957,25 @@ void CPU::SBC(int8_t operand) {
 //Sets the zero, carry, and sign flags
 //The carry bit is set if the operand is greater than or equal to the accumulator
 //The accumulator is unaffected
-void CPU::CMP(int8_t operand) {
+void CPU::CMP(uint8_t operand) {
 
-    int16_t temp = (int16_t) accumulator - (int16_t) operand;
+    int16_t temp = (uint8_t) accumulator - (uint8_t) operand;
     statusRegister = (temp & 0x80) | (temp >= 0 ? 0x1 : 0) | (temp == 0 ? 0x2 : 0) | (statusRegister & 0x7C);
 
 }
 
 //Similar to CMP but using the X register
-void CPU::CPX(int8_t operand) {
+void CPU::CPX(uint8_t operand) {
 
-    int16_t temp = (int16_t) xReg - (int16_t) operand;
+    int16_t temp = (uint8_t) xReg - (uint8_t) operand;
     statusRegister = (temp & 0x80) | (temp >= 0 ? 0x1 : 0) | (temp == 0 ? 0x2 : 0) | (statusRegister & 0x7C);
 
 }
 
 //Similar to CMP but using the Y register
-void CPU::CPY(int8_t operand) {
+void CPU::CPY(uint8_t operand) {
 
-    int16_t temp = (int16_t) yReg - (int16_t) operand;
+    int16_t temp = (uint8_t) yReg - (uint8_t) operand;
     statusRegister = (temp & 0x80) | (temp >= 0 ? 0x1 : 0) | (temp == 0 ? 0x2 : 0) | (statusRegister & 0x7C);
 
 }
@@ -1245,7 +1245,7 @@ void CPU::JSR(uint16_t address) {
 void CPU::RTS() {
 
     stackPointer += 2;
-    programCounter = (((uint16_t) memory[0x100 + stackPointer - 1]) << 8) | memory[0x100 + stackPointer];
+    programCounter = (((uint16_t) memory[0x100 + stackPointer - 1]) << 8) | ((uint16_t) memory[0x100 + stackPointer] & 0xFF);
 
 }
 

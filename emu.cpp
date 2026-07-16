@@ -642,9 +642,13 @@ void Emulator::nes_test() {
             test_log << line[i];
         }
         test_log << std::endl;
+        if (pc == "66CE") {
+            running = false;
+        }
     }
 
     romFile.close();
+    good_log.close();
 }
 
 // Helper function for writing log files
