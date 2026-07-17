@@ -670,7 +670,7 @@ void Emulator::nes_test() {
                 test_log << " ($" << low << "),Y = " << hex(exp, 4) << " @ " << hex(ind_add, 4) << " = " << hex(cpu.memory[ind_add], 2) << std::setw(4);
                 break;
             case AddressingMode::REL:
-                exp = pcint + cpu.get_next_low_nibble() + 2;
+                exp = (((pcint & 0x00FF) + cpu.get_next_low_nibble() + 2) & 0xFF) | (pcint & 0xFF00);
                 test_log << " $" << hex(exp, 4) << std::setw(25);
                 break;
             case AddressingMode::ABS:

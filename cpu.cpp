@@ -725,6 +725,59 @@ void CPU::decode() {
             break;
         case 0x64:
             break;
+        // NOP abs - 3 bytes, 4 cycles
+        case 0x0C:
+            break;
+        // Next 6 are NOP abs,x - 3 bytes, variable cycles based on page breaks
+        case 0x1C:
+            break;
+        case 0x3C:
+            break;
+        case 0x5C:
+            break;
+        case 0x7C:
+            break;
+        case 0xDC:
+            break;
+        case 0xFC:
+            break;
+        // Next 6 are NOP zpg,x - 2 bytes, 4 cycles
+        case 0x14:
+            break;
+        case 0x34:
+            break;
+        case 0x54:
+            break;
+        case 0x74:
+            break;
+        case 0xD4:
+            break;
+        case 0xF4:
+            break;
+        // Next 5 are NOP imd - 2 bytes, 2 cycles
+        case 0x80:
+            break;
+        case 0x82:
+            break;
+        case 0x89:
+            break;
+        case 0xC2:
+            break;
+        case 0xE2:
+            break;
+        // Next 6 are NOP impl - 1 byte, 2 cycles
+        case 0x1A:
+            break;
+        case 0x3A:
+            break;
+        case 0x5A:
+            break;
+        case 0x7A:
+            break;
+        case 0xDA:
+            break;
+        case 0xFA:
+            break;
         default:
             //Throw an exception - ADD LATER
             throw std::invalid_argument("Error: Invalid opcode " + std::to_string(opcode) + " decoded");
@@ -1074,32 +1127,80 @@ void CPU::SEI() { statusRegister = statusRegister | 0x4; }
 
 //Branch on carry clear
 //If the carry bit is 0, branch to programCounter + operand
-void CPU::BCC(uint8_t operand) { programCounter += (statusRegister & 0x1) == 0 ? operand : 0; }
+void CPU::BCC(uint8_t operand) { 
+    if ((statusRegister & 0x1) == 0) {
+        uint8_t low = programCounter;
+        low += operand;
+        programCounter = (programCounter & 0xFF00) | low;
+    } 
+}
 
 //Branch on carry set
-void CPU::BCS(uint8_t operand) { programCounter += (statusRegister & 0x1) == 0x1 ? operand : 0; }
+void CPU::BCS(uint8_t operand) { 
+    if ((statusRegister & 0x1) == 0x1) {
+        uint8_t low = programCounter;
+        low += operand;
+        programCounter = (programCounter & 0xFF00) | low;
+    } 
+}
 
 //Branch on zero set (aka branch on equal)
 //Branch if the zero bit is set
-void CPU::BEQ(uint8_t operand) { programCounter += (statusRegister & 0x2) == 0x2 ? operand : 0; }
+void CPU::BEQ(uint8_t operand) { 
+    if ((statusRegister & 0x2) == 0x2) {
+        uint8_t low = programCounter;
+        low += operand;
+        programCounter = (programCounter & 0xFF00) | low;
+    } 
+}
 
 //Branch on result minus
 //Branch if the sign bit is set
-void CPU::BMI(uint8_t operand) { programCounter += (statusRegister & 0x80) == 0x80 ? operand : 0; }
+void CPU::BMI(uint8_t operand) { 
+    if ((statusRegister & 0x80) == 0x80) {
+        uint8_t low = programCounter;
+        low += operand;
+        programCounter = (programCounter & 0xFF00) | low;
+    } 
+}
 
 //Branch on zero clear (aka branch on not equal)
-void CPU::BNE(uint8_t operand) { programCounter += (statusRegister & 0x2) == 0 ? operand : 0; }
+void CPU::BNE(uint8_t operand) { 
+    if ((statusRegister & 0x2) == 0) {
+        uint8_t low = programCounter;
+        low += operand;
+        programCounter = (programCounter & 0xFF00) | low;
+    } 
+}
 
 //Branch on result plus
 //Branch if the sign bit is cleared
-void CPU::BPL(uint8_t operand) { programCounter += (statusRegister & 0x80) == 0 ? operand : 0; }
+void CPU::BPL(uint8_t operand) { 
+    if ((statusRegister & 0x80) == 0) {
+        uint8_t low = programCounter;
+        low += operand;
+        programCounter = (programCounter & 0xFF00) | low;
+    } 
+}
 
 //Branch on overflow clear
 //Branch if the overflow bit is set to 0
-void CPU::BVC(uint8_t operand) { programCounter += (statusRegister & 0x40) == 0 ? operand : 0; }
+void CPU::BVC(uint8_t operand) { 
+    if ((statusRegister & 0x40) == 0) {
+        uint8_t low = programCounter;
+        low += operand;
+        programCounter = (programCounter & 0xFF00) | low;
+    }
+}
 
 //Branch on overflow set
-void CPU::BVS(uint8_t operand) { programCounter += (statusRegister & 0x40) == 0x40 ? operand : 0; }
+void CPU::BVS(uint8_t operand) { 
+    if ((statusRegister & 0x40) == 0x40) {
+        uint8_t low = programCounter;
+        low += operand;
+        programCounter = (programCounter & 0xFF00) | low;
+    } 
+}
 
 //Load and Store Instructions
 
