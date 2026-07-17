@@ -737,10 +737,11 @@ uint8_t CPU::Xind(uint8_t low) {
 //Indexed Indirect
 uint8_t CPU::indY(uint8_t low) {
 
-    uint8_t high;
-    low = memory[low];
-    high = memory[low + 1];
-    uint16_t exp = (((uint16_t) high << 8) | low) + yReg;
+    // Bad naming convention but whatever
+    uint8_t h, l;
+    l = memory[low];
+    h = memory[(low + 1) & 0xFF];
+    uint16_t exp = (((uint16_t) h << 8) | l) + (uint8_t)yReg;
     return memory[exp];
 
 }
@@ -777,17 +778,17 @@ uint16_t CPU::indAdd(uint8_t low, uint8_t high) {
 uint16_t CPU::XindAdd(uint8_t low) {
 
     uint16_t exp = (low + xReg) & 0xFF;
-    return ((uint16_t) memory[exp + 1] << 8) | memory[exp];
+    return ((uint16_t) memory[(exp + 1) & 0xFF] << 8) | memory[exp];
 
 }
 
 //Indexed Indirect
 uint16_t CPU::indYAdd(uint8_t low) {
 
-    uint8_t high;
-    low = memory[low];
-    high = memory[low + 1];
-    uint16_t exp = (((uint16_t) high << 8) | low) + yReg;
+    uint8_t h, l;
+    l = memory[low];
+    h = memory[(low + 1) & 0xFF];
+    uint16_t exp = (((uint16_t) h << 8) | l) + yReg;
     return exp;
 
 }
@@ -1094,6 +1095,7 @@ void CPU::BVS(int8_t operand) { programCounter += (statusRegister & 0x40) == 0x4
 //Load Accumulator with the operand
 //Affects sign and zero flags
 void CPU::LDA(uint8_t operand) {
+    
     accumulator = operand;
     statusRegister = (accumulator & 0x80) | (accumulator == 0 ? 0x2 : 0) | (statusRegister & 0x7D);
 

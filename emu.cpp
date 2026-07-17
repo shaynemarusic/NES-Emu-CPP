@@ -446,7 +446,7 @@ void Emulator::nes_test() {
     INDX,
     INDY,
     REL,
-    STABS
+    JSR
     };
 
     constexpr AddressingMode opcodeMode[256] = {
@@ -463,7 +463,7 @@ void Emulator::nes_test() {
     AddressingMode::ABSX, AddressingMode::ABSX, AddressingMode::ABSX, AddressingMode::ABSX,
 
     // 0x20
-    AddressingMode::ABS,  AddressingMode::INDX, AddressingMode::IMP,  AddressingMode::INDX,
+    AddressingMode::JSR,  AddressingMode::INDX, AddressingMode::IMP,  AddressingMode::INDX,
     AddressingMode::ZP,   AddressingMode::ZP,   AddressingMode::ZP,   AddressingMode::ZP,
     AddressingMode::IMP,  AddressingMode::IMM,  AddressingMode::ACC,  AddressingMode::IMM,
     AddressingMode::ABS,  AddressingMode::ABS,  AddressingMode::ABS,  AddressingMode::ABS,
@@ -478,7 +478,7 @@ void Emulator::nes_test() {
     AddressingMode::IMP,  AddressingMode::INDX, AddressingMode::IMP,  AddressingMode::INDX,
     AddressingMode::ZP,   AddressingMode::ZP,   AddressingMode::ZP,   AddressingMode::ZP,
     AddressingMode::IMP,  AddressingMode::IMM,  AddressingMode::ACC,  AddressingMode::IMM,
-    AddressingMode::ABS,  AddressingMode::ABS,  AddressingMode::ABS,  AddressingMode::ABS,
+    AddressingMode::JSR,  AddressingMode::ABS,  AddressingMode::ABS,  AddressingMode::ABS,
 
     // 0x50
     AddressingMode::REL,  AddressingMode::INDY, AddressingMode::IMP,  AddressingMode::INDY,
@@ -502,7 +502,7 @@ void Emulator::nes_test() {
     AddressingMode::IMM,  AddressingMode::INDX, AddressingMode::IMM,  AddressingMode::INDX,
     AddressingMode::ZP,   AddressingMode::ZP,   AddressingMode::ZP,   AddressingMode::ZP,
     AddressingMode::IMP,  AddressingMode::IMM,  AddressingMode::IMP,  AddressingMode::IMM,
-    AddressingMode::STABS,  AddressingMode::STABS,  AddressingMode::STABS,  AddressingMode::ABS,
+    AddressingMode::ABS,  AddressingMode::ABS,  AddressingMode::ABS,  AddressingMode::ABS,
 
     // 0x90
     AddressingMode::REL,  AddressingMode::INDY, AddressingMode::IMP,  AddressingMode::INDY,
@@ -514,7 +514,7 @@ void Emulator::nes_test() {
     AddressingMode::IMM,  AddressingMode::INDX, AddressingMode::IMM,  AddressingMode::INDX,
     AddressingMode::ZP,   AddressingMode::ZP,   AddressingMode::ZP,   AddressingMode::ZP,
     AddressingMode::IMP,  AddressingMode::IMM,  AddressingMode::IMP,  AddressingMode::IMM,
-    AddressingMode::ABS,  AddressingMode::STABS,  AddressingMode::STABS,  AddressingMode::ABS,
+    AddressingMode::ABS,  AddressingMode::ABS,  AddressingMode::ABS,  AddressingMode::ABS,
 
     // 0xB0
     AddressingMode::REL,  AddressingMode::INDY, AddressingMode::IMP,  AddressingMode::INDY,
@@ -602,7 +602,7 @@ void Emulator::nes_test() {
             case AddressingMode::ZPY:
                 test_log << " $" << low << ",Y @ " << y << " = " << hex(static_cast<uint8_t>(cpu.memory[(cpu.get_next_low_nibble() + cpu.get_y()) & 0xFF]), 2) << std::setw(15);
                 break;
-            case AddressingMode::ABS:
+            case AddressingMode::JSR:
                 test_log << " $" << hi << low << std::setw(25);
                 break;
             case AddressingMode::ABSX:
@@ -618,18 +618,18 @@ void Emulator::nes_test() {
             case AddressingMode::INDX:
                 exp = (cpu.get_next_low_nibble() + cpu.get_x()) & 0xFF;
                 ind_add = ((uint16_t) cpu.memory[(exp + 1) & 0xFF] << 8) | cpu.memory[exp];
-                test_log << " ($" << low << ",X) @ " << hex(exp, 2) << " = " << hex(ind_add, 4) << " = " << hex(cpu.memory[ind_add], 2) << std::setw(6);
+                test_log << " ($" << low << ",X) @ " << hex(exp, 2) << " = " << hex(ind_add, 4) << " = " << hex(static_cast<uint8_t>(cpu.memory[ind_add]), 2) << std::setw(6);
                 break;
             case AddressingMode::INDY:
-                exp = (((uint16_t) cpu.memory[cpu.get_next_low_nibble() + 1] << 8) | cpu.memory[cpu.get_next_low_nibble()]);
-                ind_add = exp + cpu.get_y();
-                test_log << " ($" << low << "),Y = " << hex(exp, 4) << " @ " << hex(ind_add, 4) << " = " << hex(cpu.memory[ind_add], 2) << std::setw(4);
+                exp = (((uint16_t) cpu.memory[(cpu.get_next_low_nibble() + 1) & 0xFF] << 8) | cpu.memory[cpu.get_next_low_nibble()]);
+                ind_add = exp + (uint8_t)cpu.get_y();
+                test_log << " ($" << low << "),Y = " << hex(exp, 4) << " @ " << hex(ind_add, 4) << " = " << hex(static_cast<uint8_t>(cpu.memory[ind_add]), 2) << std::setw(4);
                 break;
             case AddressingMode::REL:
                 exp = pcint + cpu.get_next_low_nibble() + 2;
                 test_log << " $" << hex(exp, 4) << std::setw(25);
                 break;
-            case AddressingMode::STABS:
+            case AddressingMode::ABS:
                 exp = ((uint16_t) cpu.get_next_high_nibble() << 8) | cpu.get_next_low_nibble();
                 test_log << " $" << hi << low << " = " << hex(static_cast<uint8_t>(cpu.memory[exp]), 2) << std::setw(20);
                 break;
