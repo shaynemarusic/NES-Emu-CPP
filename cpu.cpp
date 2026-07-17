@@ -43,7 +43,7 @@ constexpr uint8_t pcIncrement[256] = {
 CPU::CPU(int memory_mapper) {
 
     //Initialize memory
-    memory = std::unique_ptr<int8_t[]>(new int8_t[65536]);
+    memory = std::unique_ptr<uint8_t[]>(new uint8_t[65536]);
     std::fill_n(this->memory.get(), 65536, 0);
 
     stackPointer = 0xFF;
@@ -57,7 +57,7 @@ CPU::CPU(int memory_mapper) {
 CPU::CPU() {
 
     //Initialize memory
-    memory = std::unique_ptr<int8_t[]>(new int8_t[65536]);
+    memory = std::unique_ptr<uint8_t[]>(new uint8_t[65536]);
     std::fill_n(this->memory.get(), 65536, 0);
 
     stackPointer = 0xFD;
@@ -741,7 +741,7 @@ uint8_t CPU::indY(uint8_t low) {
     uint8_t h, l;
     l = memory[low];
     h = memory[(low + 1) & 0xFF];
-    uint16_t exp = (((uint16_t) h << 8) | l) + (uint8_t)yReg;
+    uint16_t exp = (((uint16_t) h << 8) | l) + yReg;
     return memory[exp];
 
 }
@@ -750,10 +750,10 @@ uint8_t CPU::indY(uint8_t low) {
 uint8_t CPU::abs(uint8_t low, uint8_t high) { return memory[(((uint16_t) high) << 8) | low]; }
 
 //Absolute, X Indexed
-uint8_t CPU::absX(uint8_t low, uint8_t high) { return memory[((((uint16_t) high) << 8) | low) + xReg]; }
+uint8_t CPU::absX(uint8_t low, uint8_t high) { return memory[absXAdd(low, high)]; }
 
 //Absolute, Y Indexed
-uint8_t CPU::absY(uint8_t low, uint8_t high) { return memory[((((uint16_t) high) << 8) | low) + yReg]; }
+uint8_t CPU::absY(uint8_t low, uint8_t high) { return memory[absYAdd(low, high)]; }
 
 //Zero Page
 uint8_t CPU::zpg(uint8_t low) { return memory[low]; }
@@ -767,10 +767,13 @@ uint8_t CPU::zpgY(uint8_t low) { return memory[(low + yReg) & 0xFF]; }
 //Addressing modes - these ones return the addresses themselves
 
 //Indirect
+// There is some funky stuff going on when a page is crossed (e.g. if the indirect address has a low byte of 0xff);
+// In such a case, the high byte should not be effected
 uint16_t CPU::indAdd(uint8_t low, uint8_t high) {
 
-    uint16_t exp = ((uint16_t) high << 8) | low;
-    return ((uint16_t) memory[exp + 1] << 8) | memory[exp];
+    uint16_t exp_low = ((uint16_t) high << 8) | low;
+    uint16_t exp_high = ((uint16_t) high << 8) | ((low + 1) & 0xFF);
+    return ((uint16_t) memory[exp_high] << 8) | memory[exp_low];
 
 }
 
@@ -857,8 +860,8 @@ void CPU::BIT(uint8_t operand) {
 void CPU::ASL(uint16_t address) {
 
     uint8_t temp = memory[address] << 1;
-    statusRegister = (temp == 0 ? 0x2 : 0) | (temp & 0x80) | ((uint8_t)memory[address] >> 7) | (statusRegister & 0x7C);
-    int8_t shifted = memory[address] << 1;
+    statusRegister = (temp == 0 ? 0x2 : 0) | (temp & 0x80) | (memory[address] >> 7) | (statusRegister & 0x7C);
+    uint8_t shifted = memory[address] << 1;
     write(address, shifted);
 
 }
@@ -867,7 +870,7 @@ void CPU::ASL(uint16_t address) {
 void CPU::ASLA() {
 
     uint8_t temp = accumulator << 1;
-    statusRegister = (temp == 0 ? 0x2 : 0) | (temp & 0x80) | ((uint8_t)accumulator >> 7) | (statusRegister & 0x7C);
+    statusRegister = (temp == 0 ? 0x2 : 0) | (temp & 0x80) | (accumulator >> 7) | (statusRegister & 0x7C);
     accumulator = accumulator << 1;
 
 }
@@ -878,8 +881,8 @@ void CPU::ASLA() {
 //Set the carry bit to the bit shifted out
 void CPU::LSR(uint16_t address) {
 
-    statusRegister = (((uint8_t)memory[address] >> 1) == 0 ? 0x2 : 0) | (memory[address] & 0x1) | (statusRegister & 0x7C);
-    int8_t shifted = (uint8_t)memory[address] >> 1;
+    statusRegister = ((memory[address] >> 1) == 0 ? 0x2 : 0) | (memory[address] & 0x1) | (statusRegister & 0x7C);
+    uint8_t shifted = memory[address] >> 1;
     write(address, shifted);
      
 }
@@ -888,8 +891,8 @@ void CPU::LSR(uint16_t address) {
 void CPU::LSRA() {
 
     // Must cast to an unsigned integer bc a 1 may be shifted in in some cases
-    statusRegister = (((uint8_t)accumulator >> 1) == 0 ? 0x2 : 0) | (accumulator & 0x1) | (statusRegister & 0x7C);
-    accumulator = (uint8_t)accumulator >> 1;
+    statusRegister = ((accumulator >> 1) == 0 ? 0x2 : 0) | (accumulator & 0x1) | (statusRegister & 0x7C);
+    accumulator = accumulator >> 1;
 
 }
 
@@ -897,8 +900,8 @@ void CPU::LSRA() {
 //Performs a left shift but shifts in the carry bit instead of exclusively 0
 void CPU::ROL(uint16_t address) {
 
-    int8_t temp = (memory[address] << 1) | (statusRegister & 0x1);
-    statusRegister = (temp == 0 ? 0x2 : 0) | (temp & 0x80) | ((uint8_t)memory[address] >> 7) | (statusRegister & 0x7C);
+    uint8_t temp = (memory[address] << 1) | (statusRegister & 0x1);
+    statusRegister = (temp == 0 ? 0x2 : 0) | (temp & 0x80) | (memory[address] >> 7) | (statusRegister & 0x7C);
     write(address, temp);
 
 }
@@ -907,7 +910,7 @@ void CPU::ROL(uint16_t address) {
 void CPU::ROLA() {
 
     int8_t temp = (accumulator << 1) | (statusRegister & 0x1);
-    statusRegister = (temp == 0 ? 0x2 : 0) | (temp & 0x80) | ((uint8_t)accumulator >> 7) | (statusRegister & 0x7C);
+    statusRegister = (temp == 0 ? 0x2 : 0) | (temp & 0x80) | (accumulator >> 7) | (statusRegister & 0x7C);
     accumulator = temp;
 
 }
@@ -916,7 +919,7 @@ void CPU::ROLA() {
 //Performs a right shift but shifts in the carry bit instead of exclusively 0
 void CPU::ROR(uint16_t address) {
 
-    int8_t temp = ((uint8_t)memory[address] >> 1) | ((statusRegister & 0x1) << 7);
+    uint8_t temp = (memory[address] >> 1) | ((statusRegister & 0x1) << 7);
     statusRegister = (temp == 0 ? 0x2 : 0) | (memory[address] & 0x1) | (statusRegister & 0x7C) | (temp & 0x80);
     write(address, temp);
 
@@ -924,7 +927,7 @@ void CPU::ROR(uint16_t address) {
 
 void CPU::RORA() {
 
-    int8_t temp = ((uint8_t)accumulator >> 1) | ((statusRegister & 0x1) << 7);
+    int8_t temp = (accumulator >> 1) | ((statusRegister & 0x1) << 7);
     statusRegister = (temp == 0 ? 0x2 : 0) | (accumulator & 0x1) | (statusRegister & 0x7C) | (temp & 0x80);
     accumulator = temp;
 
@@ -937,7 +940,7 @@ void CPU::RORA() {
 //Sets the zero, overflow, carry, and sign flags when applicable
 void CPU::ADC(uint8_t operand) {
 
-    int16_t temp = (uint8_t)accumulator + (statusRegister & 0x1) + operand;
+    int16_t temp = accumulator + (statusRegister & 0x1) + operand;
     statusRegister = (((temp ^ accumulator) & (temp ^ operand) & 0x80) == 0x80 ? 0x40 : 0) | ((temp & 0xFF) == 0 ? 0x2 : 0) | (temp & 0x80) | ((temp & 0x100) == 0x100 ? 0x1 : 0) | (statusRegister & 0x3C);
     accumulator = temp & 0xFF;
 
@@ -949,7 +952,7 @@ void CPU::ADC(uint8_t operand) {
 //Carry flag is set if the result is greater than or equal to 0
 void CPU::SBC(uint8_t operand) {
 
-    int16_t temp = (uint8_t)accumulator - operand - (~statusRegister & 0x1);
+    int16_t temp = accumulator - operand - (~statusRegister & 0x1);
     statusRegister = (((accumulator ^ operand) & (accumulator ^ temp) & 0x80) == 0x80 ? 0x40 : 0) | (temp == 0 ? 0x2 : 0) | (temp & 0x80) | (temp >= 0 ? 0x1 : 0) | (statusRegister & 0x3C);
     accumulator = temp & 0xFF;
 
@@ -961,7 +964,7 @@ void CPU::SBC(uint8_t operand) {
 //The accumulator is unaffected
 void CPU::CMP(uint8_t operand) {
 
-    int16_t temp = (uint8_t) accumulator - (uint8_t) operand;
+    int16_t temp =  accumulator -  operand;
     statusRegister = (temp & 0x80) | (temp >= 0 ? 0x1 : 0) | (temp == 0 ? 0x2 : 0) | (statusRegister & 0x7C);
 
 }
@@ -969,7 +972,7 @@ void CPU::CMP(uint8_t operand) {
 //Similar to CMP but using the X register
 void CPU::CPX(uint8_t operand) {
 
-    int16_t temp = (uint8_t) xReg - (uint8_t) operand;
+    int16_t temp =  xReg -  operand;
     statusRegister = (temp & 0x80) | (temp >= 0 ? 0x1 : 0) | (temp == 0 ? 0x2 : 0) | (statusRegister & 0x7C);
 
 }
@@ -977,7 +980,7 @@ void CPU::CPX(uint8_t operand) {
 //Similar to CMP but using the Y register
 void CPU::CPY(uint8_t operand) {
 
-    int16_t temp = (uint8_t) yReg - (uint8_t) operand;
+    int16_t temp =  yReg -  operand;
     statusRegister = (temp & 0x80) | (temp >= 0 ? 0x1 : 0) | (temp == 0 ? 0x2 : 0) | (statusRegister & 0x7C);
 
 }
@@ -988,7 +991,7 @@ void CPU::CPY(uint8_t operand) {
 //Only affects zero and sign flags
 void CPU::DEC(uint16_t address) {
 
-    int8_t decremented = memory[address] - 1;
+    uint8_t decremented = memory[address] - 1;
     write(address, decremented);
     statusRegister = (memory[address] & 0x80) | (memory[address] == 0 ? 0x2 : 0) | (statusRegister & 0x7D);
 
@@ -1014,7 +1017,7 @@ void CPU::DEY() {
 //Only affects zero and sign flags
 void CPU::INC(uint16_t address) {
 
-    int8_t incremented = memory[address] + 1;
+    uint8_t incremented = memory[address] + 1;
     write(address, incremented);
     statusRegister = (memory[address] & 0x80) | (memory[address] == 0 ? 0x2 : 0) | (statusRegister & 0x7D);
 
@@ -1063,32 +1066,32 @@ void CPU::SEI() { statusRegister = statusRegister | 0x4; }
 
 //Branch on carry clear
 //If the carry bit is 0, branch to programCounter + operand
-void CPU::BCC(int8_t operand) { programCounter += (statusRegister & 0x1) == 0 ? operand : 0; }
+void CPU::BCC(uint8_t operand) { programCounter += (statusRegister & 0x1) == 0 ? operand : 0; }
 
 //Branch on carry set
-void CPU::BCS(int8_t operand) { programCounter += (statusRegister & 0x1) == 0x1 ? operand : 0; }
+void CPU::BCS(uint8_t operand) { programCounter += (statusRegister & 0x1) == 0x1 ? operand : 0; }
 
 //Branch on zero set (aka branch on equal)
 //Branch if the zero bit is set
-void CPU::BEQ(int8_t operand) { programCounter += (statusRegister & 0x2) == 0x2 ? operand : 0; }
+void CPU::BEQ(uint8_t operand) { programCounter += (statusRegister & 0x2) == 0x2 ? operand : 0; }
 
 //Branch on result minus
 //Branch if the sign bit is set
-void CPU::BMI(int8_t operand) { programCounter += (statusRegister & 0x80) == 0x80 ? operand : 0; }
+void CPU::BMI(uint8_t operand) { programCounter += (statusRegister & 0x80) == 0x80 ? operand : 0; }
 
 //Branch on zero clear (aka branch on not equal)
-void CPU::BNE(int8_t operand) { programCounter += (statusRegister & 0x2) == 0 ? operand : 0; }
+void CPU::BNE(uint8_t operand) { programCounter += (statusRegister & 0x2) == 0 ? operand : 0; }
 
 //Branch on result plus
 //Branch if the sign bit is cleared
-void CPU::BPL(int8_t operand) { programCounter += (statusRegister & 0x80) == 0 ? operand : 0; }
+void CPU::BPL(uint8_t operand) { programCounter += (statusRegister & 0x80) == 0 ? operand : 0; }
 
 //Branch on overflow clear
 //Branch if the overflow bit is set to 0
-void CPU::BVC(int8_t operand) { programCounter += (statusRegister & 0x40) == 0 ? operand : 0; }
+void CPU::BVC(uint8_t operand) { programCounter += (statusRegister & 0x40) == 0 ? operand : 0; }
 
 //Branch on overflow set
-void CPU::BVS(int8_t operand) { programCounter += (statusRegister & 0x40) == 0x40 ? operand : 0; }
+void CPU::BVS(uint8_t operand) { programCounter += (statusRegister & 0x40) == 0x40 ? operand : 0; }
 
 //Load and Store Instructions
 
@@ -1183,7 +1186,7 @@ void CPU::TYA() {
 //Push accumulator onto the stack
 void CPU::PHA() {
 
-    write(0x100 + stackPointer, (int8_t&)accumulator);
+    write(0x100 + stackPointer, (uint8_t&)accumulator);
     stackPointer--;
 
 }
@@ -1193,7 +1196,7 @@ void CPU::PHA() {
 void CPU::PHP() {
 
     uint8_t val = statusRegister | 48;
-    write(0x100 + stackPointer, (int8_t&)val);
+    write(0x100 + stackPointer, (uint8_t&)val);
     stackPointer--;
 
 }
@@ -1219,8 +1222,8 @@ void CPU::PLP() {
 
 // Helper function to push the program counter to the stack
 void CPU::pushPC() {
-    int8_t high = programCounter >> 8;
-    int8_t low = programCounter & 15;
+    uint8_t high = programCounter >> 8;
+    uint8_t low = programCounter & 15;
     write(0x100 + stackPointer, low);
     write(0x100 + stackPointer - 1, high);
     stackPointer -= 2;
@@ -1235,8 +1238,8 @@ void CPU::JMP(uint16_t address) { programCounter = address; }
 //Push the program counter onto the stack
 void CPU::JSR(uint16_t address) {
 
-    int8_t low = programCounter;
-    int8_t high = programCounter >> 8;
+    uint8_t low = programCounter;
+    uint8_t high = programCounter >> 8;
     write(0x100 + stackPointer, high);
     write(0x100 + stackPointer - 1, low);
     stackPointer -= 2;
@@ -1291,7 +1294,7 @@ void CPU::RTI() {
 //Mapper Write function implementations
 
 // Base write function from which the mapper writes are called
-void CPU::write(uint16_t address, int8_t& val) {
+void CPU::write(uint16_t address, uint8_t& val) {
     // Mirror in correct location
     // Three mirrors in this range
     if (address <= 0x1FFF) {
@@ -1325,7 +1328,7 @@ void CPU::write(uint16_t address, int8_t& val) {
 }
 
 // Default memory mapper write. Does nothing
-void CPU::default_write(uint16_t address, int8_t& val) {
+void CPU::default_write(uint16_t address, uint8_t& val) {
     return;
 }
 
@@ -1357,7 +1360,7 @@ void CPU::interrupt_IRQ_generic() {
 
     //Store the status register
     statusRegister |= 32;
-    write(0x100 + stackPointer, (int8_t&)statusRegister);
+    write(0x100 + stackPointer, (uint8_t&)statusRegister);
     stackPointer--;
 
     //Set interrupt disable
@@ -1378,7 +1381,7 @@ void CPU::interrupt_NMI() {
 
     //Store the status register
     statusRegister |= 32;
-    write(0x100 + stackPointer, (int8_t&)statusRegister);
+    write(0x100 + stackPointer, (uint8_t&)statusRegister);
     stackPointer--;
 
     //Set interrupt disable
@@ -1397,21 +1400,21 @@ void CPU::set_PC(uint16_t pc) { programCounter = pc; }
 
 uint16_t CPU::get_PC() const { return programCounter; }
 
-void CPU::set_accumulator(int8_t acc) { accumulator = acc; }
+void CPU::set_accumulator(uint8_t acc) { accumulator = acc; }
 
-int8_t CPU::get_accumulator() const { return accumulator; }
+uint8_t CPU::get_accumulator() const { return accumulator; }
 
 void CPU::set_status(uint8_t status) { statusRegister = status; }
 
 uint8_t CPU::get_status() const { return statusRegister; }
 
-void CPU::set_x(int8_t x) { xReg = x; }
+void CPU::set_x(uint8_t x) { xReg = x; }
 
-int8_t CPU::get_x() const { return xReg; }
+uint8_t CPU::get_x() const { return xReg; }
 
-void CPU::set_y(int8_t y) { yReg = y; }
+void CPU::set_y(uint8_t y) { yReg = y; }
 
-int8_t CPU::get_y() const { return yReg; }
+uint8_t CPU::get_y() const { return yReg; }
 
 void CPU::set_stack(uint8_t stack) { stackPointer = stack; }
 

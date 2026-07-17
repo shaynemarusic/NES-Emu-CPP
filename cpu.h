@@ -10,7 +10,7 @@ class CPU {
     private:
         //Registers
         //Stores results of arithmetic and logic operations
-        int8_t accumulator;
+        uint8_t accumulator;
         /*Only 7 bits of this register are actually used; each bit corresponds to a different flag
         The structure of the register: NV-BDIZC
         N: sign flag (0 is pos, 1 is neg)
@@ -29,9 +29,9 @@ class CPU {
         //No detection of stack overflow
         uint8_t stackPointer;
         //Used for addressing
-        int8_t xReg;
+        uint8_t xReg;
         //Like the X register but cannot affect the stack pointer
-        int8_t yReg;
+        uint8_t yReg;
         int mem_map;
         // Opcode and operand vars
         uint8_t opcode, high_nibble, low_nibble;
@@ -94,14 +94,14 @@ class CPU {
         void SEI();
 
         //Branch Instructions
-        void BCC(int8_t operand);
-        void BCS(int8_t operand);
-        void BEQ(int8_t operand);
-        void BMI(int8_t operand);
-        void BNE(int8_t operand);
-        void BPL(int8_t operand);
-        void BVC(int8_t operand);
-        void BVS(int8_t operand);
+        void BCC(uint8_t operand);
+        void BCS(uint8_t operand);
+        void BEQ(uint8_t operand);
+        void BMI(uint8_t operand);
+        void BNE(uint8_t operand);
+        void BPL(uint8_t operand);
+        void BVC(uint8_t operand);
+        void BVS(uint8_t operand);
 
         //Load and Store Instructions
         void LDA(uint8_t operand);
@@ -112,13 +112,13 @@ class CPU {
         // void STY(uint16_t address);
 
         //Memory Map Write Functions - these will be used in place of the above ST* instructions
-        void default_write(uint16_t address, int8_t& val);
+        void default_write(uint16_t address, uint8_t& val);
 
-        std::unordered_map<int, void (CPU::*) (uint16_t address, int8_t& val)> writes = {
+        std::unordered_map<int, void (CPU::*) (uint16_t address, uint8_t& val)> writes = {
             {0, &CPU::default_write}
         };
 
-        void write(uint16_t address, int8_t& val);
+        void write(uint16_t address, uint8_t& val);
 
         //Transfer Instructions
         void TAX();
@@ -172,19 +172,19 @@ class CPU {
         void interrupt_reset();
         void interrupt_IRQ_generic();
         void interrupt_NMI();
-        std::unique_ptr<int8_t[]> memory;
+        std::unique_ptr<uint8_t[]> memory;
 
         //Setters/getters for cpu variables -- mostly used for testing/debugging
         void set_PC(uint16_t pc);
         uint16_t get_PC() const;
-        void set_accumulator(int8_t acc);
-        int8_t get_accumulator() const;
+        void set_accumulator(uint8_t acc);
+        uint8_t get_accumulator() const;
         void set_status(uint8_t status);
         uint8_t get_status() const;
-        void set_x(int8_t x);
-        int8_t get_x() const;
-        void set_y(int8_t y);
-        int8_t get_y() const;
+        void set_x(uint8_t x);
+        uint8_t get_x() const;
+        void set_y(uint8_t y);
+        uint8_t get_y() const;
         void set_stack(uint8_t stack);
         uint8_t get_stack() const;
         void set_memMap(int memory_mapper);
