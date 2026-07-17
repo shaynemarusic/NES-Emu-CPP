@@ -333,103 +333,138 @@ void Emulator::nes_test() {
 
     constexpr uint8_t pcIncrement[256] = {
     // 0x00
-    1,2,0,0,0,2,2,0,1,2,1,0,0,3,3,0,
+    1,2,1,2,2,2,2,2,1,2,1,2,3,3,3,3,
     // 0x10
-    2,2,0,0,0,2,2,0,1,3,0,0,0,3,3,0,
+    2,2,1,2,2,2,2,2,1,3,1,3,3,3,3,3,
     // 0x20
-    3,2,0,0,2,2,2,0,1,2,1,0,3,3,3,0,
+    3,2,1,2,2,2,2,2,1,2,1,2,3,3,3,3,
     // 0x30
-    2,2,0,0,0,2,2,0,1,3,0,0,0,3,3,0,
+    2,2,1,2,2,2,2,2,1,3,1,3,3,3,3,3,
     // 0x40
-    1,2,0,0,0,2,2,0,1,2,1,0,3,3,3,0,
+    1,2,1,2,2,2,2,2,1,2,1,2,3,3,3,3,
     // 0x50
-    2,2,0,0,0,2,2,0,1,3,0,0,0,3,3,0,
+    2,2,1,2,2,2,2,2,1,3,1,3,3,3,3,3,
     // 0x60
-    1,2,0,0,0,2,2,0,1,2,1,0,3,3,3,0,
+    1,2,1,2,2,2,2,2,1,2,1,2,3,3,3,3,
     // 0x70
-    2,2,0,0,0,2,2,0,1,3,0,0,0,3,3,0,
+    2,2,1,2,2,2,2,2,1,3,1,3,3,3,3,3,
     // 0x80
-    0,2,0,0,2,2,2,0,1,0,1,0,3,3,3,0,
+    2,2,2,2,2,2,2,2,1,2,1,2,3,3,3,3,
     // 0x90
-    2,2,0,0,2,2,2,0,1,3,1,0,0,3,0,0,
+    2,2,1,2,2,2,2,2,1,3,1,3,3,3,3,3,
     // 0xA0
-    2,2,2,0,2,2,2,0,1,2,1,0,3,3,3,0,
+    2,2,2,2,2,2,2,2,1,2,1,2,3,3,3,3,
     // 0xB0
-    2,2,0,0,2,2,2,0,1,3,1,0,3,3,3,0,
+    2,2,1,2,2,2,2,2,1,3,1,3,3,3,3,3,
     // 0xC0
-    2,2,0,0,2,2,2,0,1,2,1,0,3,3,3,0,
+    2,2,2,2,2,2,2,2,1,2,1,2,3,3,3,3,
     // 0xD0
-    2,2,0,0,0,2,2,0,1,3,0,0,0,3,3,0,
+    2,2,1,2,2,2,2,2,1,3,1,3,3,3,3,3,
     // 0xE0
-    2,2,0,0,2,2,2,0,1,2,1,0,3,3,3,0,
+    2,2,2,2,2,2,2,2,1,2,1,2,3,3,3,3,
     // 0xF0
-    2,2,0,0,0,2,2,0,1,3,0,0,0,3,3,0
+    2,2,1,2,2,2,2,2,1,3,1,3,3,3,3,3
     };
 
     const char* const opcodeName[256] = {
     // 0x00
-    "BRK","ORA","KIL","SLO","NOP","ORA","ASL","SLO",
-    "PHP","ORA","ASL","ANC","NOP","ORA","ASL","SLO",
+    "BRK","ORA","*KIL","*SLO","*NOP","ORA","ASL","*SLO",
+    "PHP","ORA","ASL","*ANC","*NOP","ORA","ASL","*SLO",
 
     // 0x10
-    "BPL","ORA","KIL","SLO","NOP","ORA","ASL","SLO",
-    "CLC","ORA","NOP","SLO","NOP","ORA","ASL","SLO",
+    "BPL","ORA","*KIL","*SLO","*NOP","ORA","ASL","*SLO",
+    "CLC","ORA","*NOP","*SLO","*NOP","ORA","ASL","*SLO",
 
     // 0x20
-    "JSR","AND","KIL","RLA","BIT","AND","ROL","RLA",
-    "PLP","AND","ROL","ANC","BIT","AND","ROL","RLA",
+    "JSR","AND","*KIL","*RLA","BIT","AND","ROL","*RLA",
+    "PLP","AND","ROL","*ANC","BIT","AND","ROL","*RLA",
 
     // 0x30
-    "BMI","AND","KIL","RLA","NOP","AND","ROL","RLA",
-    "SEC","AND","NOP","RLA","NOP","AND","ROL","RLA",
+    "BMI","AND","*KIL","*RLA","*NOP","AND","ROL","*RLA",
+    "SEC","AND","*NOP","*RLA","*NOP","AND","ROL","*RLA",
 
     // 0x40
-    "RTI","EOR","KIL","SRE","NOP","EOR","LSR","SRE",
-    "PHA","EOR","LSR","ALR","JMP","EOR","LSR","SRE",
+    "RTI","EOR","*KIL","*SRE","*NOP","EOR","LSR","*SRE",
+    "PHA","EOR","LSR","*ALR","JMP","EOR","LSR","*SRE",
 
     // 0x50
-    "BVC","EOR","KIL","SRE","NOP","EOR","LSR","SRE",
-    "CLI","EOR","NOP","SRE","NOP","EOR","LSR","SRE",
+    "BVC","EOR","*KIL","*SRE","*NOP","EOR","LSR","*SRE",
+    "CLI","EOR","*NOP","*SRE","*NOP","EOR","LSR","*SRE",
 
     // 0x60
-    "RTS","ADC","KIL","RRA","NOP","ADC","ROR","RRA",
-    "PLA","ADC","ROR","ARR","JMP","ADC","ROR","RRA",
+    "RTS","ADC","*KIL","*RRA","*NOP","ADC","ROR","*RRA",
+    "PLA","ADC","ROR","*ARR","JMP","ADC","ROR","*RRA",
 
     // 0x70
-    "BVS","ADC","KIL","RRA","NOP","ADC","ROR","RRA",
-    "SEI","ADC","NOP","RRA","NOP","ADC","ROR","RRA",
+    "BVS","ADC","*KIL","*RRA","*NOP","ADC","ROR","*RRA",
+    "SEI","ADC","*NOP","*RRA","*NOP","ADC","ROR","*RRA",
 
     // 0x80
-    "NOP","STA","NOP","SAX","STY","STA","STX","SAX",
-    "DEY","NOP","TXA","XAA","STY","STA","STX","SAX",
+    "*NOP","STA","*NOP","*SAX","STY","STA","STX","*SAX",
+    "DEY","*NOP","TXA","*XAA","STY","STA","STX","*SAX",
 
     // 0x90
-    "BCC","STA","KIL","AHX","STY","STA","STX","SAX",
-    "TYA","STA","TXS","TAS","SHY","STA","SHX","AHX",
+    "BCC","STA","*KIL","*AHX","STY","STA","STX","*SAX",
+    "TYA","STA","TXS","*TAS","*SHY","STA","*SHX","*AHX",
 
     // 0xA0
-    "LDY","LDA","LDX","LAX","LDY","LDA","LDX","LAX",
-    "TAY","LDA","TAX","LAX","LDY","LDA","LDX","LAX",
+    "LDY","LDA","LDX","*LAX","LDY","LDA","LDX","*LAX",
+    "TAY","LDA","TAX","*LAX","LDY","LDA","LDX","*LAX",
 
     // 0xB0
-    "BCS","LDA","KIL","LAX","LDY","LDA","LDX","LAX",
-    "CLV","LDA","TSX","LAS","LDY","LDA","LDX","LAX",
+    "BCS","LDA","*KIL","*LAX","LDY","LDA","LDX","*LAX",
+    "CLV","LDA","TSX","*LAS","LDY","LDA","LDX","*LAX",
 
     // 0xC0
-    "CPY","CMP","NOP","DCP","CPY","CMP","DEC","DCP",
-    "INY","CMP","DEX","AXS","CPY","CMP","DEC","DCP",
+    "CPY","CMP","*NOP","*DCP","CPY","CMP","DEC","*DCP",
+    "INY","CMP","DEX","*AXS","CPY","CMP","DEC","*DCP",
 
     // 0xD0
-    "BNE","CMP","KIL","DCP","NOP","CMP","DEC","DCP",
-    "CLD","CMP","NOP","DCP","NOP","CMP","DEC","DCP",
+    "BNE","CMP","*KIL","*DCP","*NOP","CMP","DEC","*DCP",
+    "CLD","CMP","*NOP","*DCP","*NOP","CMP","DEC","*DCP",
 
     // 0xE0
-    "CPX","SBC","NOP","ISC","CPX","SBC","INC","ISC",
-    "INX","SBC","NOP","SBC","CPX","SBC","INC","ISC",
+    "CPX","SBC","*NOP","*ISC","CPX","SBC","INC","*ISC",
+    "INX","SBC","NOP","SBC","CPX","SBC","INC","*ISC",
 
     // 0xF0
-    "BEQ","SBC","KIL","ISC","NOP","SBC","INC","ISC",
-    "SED","SBC","NOP","ISC","NOP","SBC","INC","ISC"
+    "BEQ","SBC","*KIL","*ISC","*NOP","SBC","INC","*ISC",
+    "SED","SBC","*NOP","*ISC","*NOP","SBC","INC","*ISC"
+    };
+
+    constexpr bool unofficialOpcode[256] = {
+    // 0x00
+    false,false,true,true,true,false,false,true,false,false,false,true,true,false,false,true,
+    // 0x10
+    false,false,true,true,true,false,false,true,false,false,true,true,true,false,false,true,
+    // 0x20
+    false,false,true,true,false,false,false,true,false,false,false,true,false,false,false,true,
+    // 0x30
+    false,false,true,true,true,false,false,true,false,false,true,true,true,false,false,true,
+    // 0x40
+    false,false,true,true,true,false,false,true,false,false,false,true,false,false,false,true,
+    // 0x50
+    false,false,true,true,true,false,false,true,false,false,true,true,true,false,false,true,
+    // 0x60
+    false,false,true,true,true,false,false,true,false,false,false,true,false,false,false,true,
+    // 0x70
+    false,false,true,true,true,false,false,true,false,false,true,true,true,false,false,true,
+    // 0x80
+    true,false,true,true,false,false,false,true,false,true,false,true,false,false,false,true,
+    // 0x90
+    false,false,true,true,false,false,false,true,false,false,false,true,true,false,true,true,
+    // 0xA0
+    false,false,false,true,false,false,false,true,false,false,false,true,false,false,false,true,
+    // 0xB0
+    false,false,true,true,false,false,false,true,false,false,false,true,false,false,false,true,
+    // 0xC0
+    false,false,true,true,false,false,false,true,false,false,false,true,false,false,false,true,
+    // 0xD0
+    false,false,true,true,true,false,false,true,false,false,true,true,true,false,false,true,
+    // 0xE0
+    false,false,true,true,false,false,false,true,false,false,true,false,false,false,false,true,
+    // 0xF0
+    false,false,true,true,true,false,false,true,false,false,true,true,true,false,false,true
     };
 
     enum class AddressingMode {
@@ -580,6 +615,9 @@ void Emulator::nes_test() {
             test_log << " " << low << " " << hi << std::setw(5);
         }
 
+        if (unofficialOpcode[op_int]) {
+            
+        }
         test_log << opcodeName[op_int];
         AddressingMode mode = opcodeMode[op_int];
         uint16_t exp, ind_add, exp_low, exp_high;

@@ -5001,3 +5001,12 @@ C6B2  48        PHA                             A:FF X:97 Y:4E P:A5 SP:F9 PPU:12
 C6B3  A9 AA     LDA #$AA                        A:FF X:97 Y:4E P:A5 SP:F8 PPU:128, 62 CYC:14570
 C6B5  D0 05     BNE $C6BC                       A:AA X:97 Y:4E P:A5 SP:F8 PPU:128, 68 CYC:14572
 C6BC  28        PLP                             A:AA X:97 Y:4E P:A5 SP:F8 PPU:128, 77 CYC:14575
+C6BD  04 A9    *NOP $A9 = 00                    A:AA X:97 Y:4E P:EF SP:F9 PPU:128, 89 CYC:14579
+C6BF  44 A9    *NOP $A9 = 00                    A:AA X:97 Y:4E P:EF SP:F9 PPU:128, 98 CYC:14582
+C6C1  64 A9    *NOP $A9 = 00                    A:AA X:97 Y:4E P:EF SP:F9 PPU:128,107 CYC:14585
+C6C3  EA        NOP                             A:AA X:97 Y:4E P:EF SP:F9 PPU:128,116 CYC:14588
+C6C4  EA        NOP                             A:AA X:97 Y:4E P:EF SP:F9 PPU:128,122 CYC:14590
+C6C5  EA        NOP                             A:AA X:97 Y:4E P:EF SP:F9 PPU:128,128 CYC:14592
+C6C6  EA        NOP                             A:AA X:97 Y:4E P:EF SP:F9 PPU:128,134 CYC:14594
+C6C7  08        PHP                             A:AA X:97 Y:4E P:EF SP:F9 PPU:128,140 CYC:14596
+C6C8  48        PHA                             A:AA X:97 Y:4E P:EF SP:F8 PPU:128,149 CYC:14599
