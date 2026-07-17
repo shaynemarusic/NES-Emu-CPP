@@ -597,10 +597,12 @@ void Emulator::nes_test() {
                 test_log << " $" << low << " = " << hex(cpu.memory[cpu.get_next_low_nibble()], 2) << std::setw(22);
                 break;
             case AddressingMode::ZPX:
-                test_log << " $" << low << ",X @ " << x << " = " << hex(cpu.memory[(cpu.get_next_low_nibble() + cpu.get_x()) & 0xFF], 2) << std::setw(15);
+                exp = (cpu.get_next_low_nibble() + cpu.get_x()) & 0xFF;
+                test_log << " $" << low << ",X @ " << hex(exp, 2) << " = " << hex(cpu.memory[exp], 2) << std::setw(15);
                 break;
             case AddressingMode::ZPY:
-                test_log << " $" << low << ",Y @ " << y << " = " << hex(cpu.memory[(cpu.get_next_low_nibble() + cpu.get_y()) & 0xFF], 2) << std::setw(15);
+                exp = (cpu.get_next_low_nibble() + cpu.get_y()) & 0xFF;
+                test_log << " $" << low << ",Y @ " << hex(exp, 2) << " = " << hex(cpu.memory[exp], 2) << std::setw(15);
                 break;
             case AddressingMode::JSR:
                 test_log << " $" << hi << low << std::setw(25);

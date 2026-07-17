@@ -456,7 +456,7 @@ void CPU::decode() {
             break;
         //STX zpg, Y
         case 0x96:
-            write(zpgYAdd(low_nibble), yReg);
+            write(zpgYAdd(low_nibble), xReg);
             break;
         //TYA impl
         case 0x98:
@@ -560,7 +560,7 @@ void CPU::decode() {
             break;
         //LDA abs, X
         case 0xBD:
-            LDA(absY(low_nibble, high_nibble));
+            LDA(absX(low_nibble, high_nibble));
             break;
         //LDX abs, Y
         case 0xBE:
