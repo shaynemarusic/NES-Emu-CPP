@@ -68,6 +68,8 @@ class CPU {
         void ROLA();
         void ROR(uint16_t address);
         void RORA();
+        // Unofficial Shifts
+        void SLO(uint16_t address);
 
         //Arithmetic Instructions
         void ADC(uint8_t operand);
@@ -83,6 +85,9 @@ class CPU {
         void INC(uint16_t address);
         void INX();
         void INY();
+        // Unofficial Increments
+        void DCP(uint16_t address);
+        void ISB(uint16_t address);
 
         //Flag Instructions
         void CLC();

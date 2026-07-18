@@ -424,12 +424,12 @@ void Emulator::nes_test() {
     "CLD","CMP","*NOP","*DCP","*NOP","CMP","DEC","*DCP",
 
     // 0xE0
-    "CPX","SBC","*NOP","*ISC","CPX","SBC","INC","*ISC",
-    "INX","SBC","NOP","SBC","CPX","SBC","INC","*ISC",
+    "CPX","SBC","*NOP","*ISB","CPX","SBC","INC","*ISB",
+    "INX","SBC","NOP","*SBC","CPX","SBC","INC","*ISB",
 
     // 0xF0
-    "BEQ","SBC","*KIL","*ISC","*NOP","SBC","INC","*ISC",
-    "SED","SBC","*NOP","*ISC","*NOP","SBC","INC","*ISC"
+    "BEQ","SBC","*KIL","*ISB","*NOP","SBC","INC","*ISB",
+    "SED","SBC","*NOP","*ISB","*NOP","SBC","INC","*ISB"
     };
 
     constexpr bool unofficialOpcode[256] = {

@@ -820,6 +820,97 @@ void CPU::decode() {
         case 0x83:
             SAX(XindAdd(low_nibble));
             break;
+        // USBC - same as SBC #
+        case 0xEB:
+            SBC(low_nibble);
+            break;
+        // DCP instructions
+        // DCP zpg
+        case 0xC7:
+            DCP(zpgAdd(low_nibble));
+            break;
+        // DCP zpg, X
+        case 0xD7:
+            DCP(zpgXAdd(low_nibble));
+            break;
+        // DCP abs
+        case 0xCF:
+            DCP(absAdd(low_nibble, high_nibble));
+            break;
+        // DCP abs, X
+        case 0xDF:
+            DCP(absXAdd(low_nibble, high_nibble));
+            break;
+        // DCP abs, Y
+        case 0xDB:
+            DCP(absYAdd(low_nibble, high_nibble));
+            break;
+        // DCP ind, X
+        case 0xC3:
+            DCP(XindAdd(low_nibble));
+            break;
+        // DCP ind, Y
+        case 0xD3:
+            DCP(indYAdd(low_nibble));
+            break;
+        // ISB instructions
+        // ISB zpg
+        case 0xE7:
+            ISB(zpgAdd(low_nibble));
+            break;
+        // ISB zpg, X
+        case 0xF7:
+            ISB(zpgXAdd(low_nibble));
+            break;
+        // ISB abs
+        case 0xEF:
+            ISB(absAdd(low_nibble, high_nibble));
+            break;
+        // ISB abs, X
+        case 0xFF:
+            ISB(absXAdd(low_nibble, high_nibble));
+            break;
+        // ISB abs, Y
+        case 0xFB:
+            ISB(absYAdd(low_nibble, high_nibble));
+            break;
+        // ISB ind, X
+        case 0xE3:
+            ISB(XindAdd(low_nibble));
+            break;
+        // ISB ind, Y
+        case 0xF3:
+            ISB(indYAdd(low_nibble));
+            break;
+        // SLO instructions
+        // SLO zpg
+        case 0x07:
+            SLO(zpgAdd(low_nibble));
+            break;
+        // SLO zpg, X
+        case 0x17:
+            SLO(zpgXAdd(low_nibble));
+            break;
+        // SLO abs
+        case 0x0F:
+            SLO(absAdd(low_nibble, high_nibble));
+            break;
+        // SLO abs, X
+        case 0x1F:
+            SLO(absXAdd(low_nibble, high_nibble));
+            break;
+        // SLO abs, Y
+        case 0x1B:
+            SLO(absYAdd(low_nibble, high_nibble));
+            break;
+        // SLO ind, X
+        case 0x03:
+            SLO(XindAdd(low_nibble));
+            break;
+        // SLO ind, Y
+        case 0x13:
+            SLO(indYAdd(low_nibble));
+            break;
         default:
             //Throw an exception - ADD LATER
             throw std::invalid_argument("Error: Invalid opcode " + std::to_string(opcode) + " decoded");
@@ -1036,6 +1127,15 @@ void CPU::RORA() {
 
 }
 
+// Unofficial Shifts
+// Performs an ASL and an ORA
+void CPU::SLO(uint16_t address) {
+
+    ASL(address);
+    ORA(memory[address]);
+
+}
+
 //Arithmetic Instructions
 
 //Adds the operand and carry from previous instruction to the accumulator and store the result in the accumulator
@@ -1141,6 +1241,23 @@ void CPU::INY() {
     statusRegister = (yReg & 0x80) | (yReg == 0 ? 0x2 : 0) | (statusRegister & 0x7D);
 
 }
+
+// Unofficial Increments
+// Decrements operand and compares it to accumulator
+void CPU::DCP(uint16_t address) { 
+
+    DEC(address);
+    CMP(memory[address]);
+
+ }
+
+ // Increments operand and performs SBC
+ void CPU::ISB(uint16_t address) {
+
+    INC(address);
+    SBC(memory[address]);
+
+ }
 
 //Flag Instructions
 
