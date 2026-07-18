@@ -70,6 +70,9 @@ class CPU {
         void RORA();
         // Unofficial Shifts
         void SLO(uint16_t address);
+        void RLA(uint16_t address);
+        void SRE(uint16_t address);
+        void RRA(uint16_t address);
 
         //Arithmetic Instructions
         void ADC(uint8_t operand);

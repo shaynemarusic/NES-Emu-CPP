@@ -582,9 +582,11 @@ void Emulator::nes_test() {
     AddressingMode::ABSX, AddressingMode::ABSX, AddressingMode::ABSX, AddressingMode::ABSX
     };
 
+    int lines = 0;
     running = true;
     std::string line;
     while (running) {
+        lines++;
         std::getline(good_log, line);
         // Log state of registers, PC, etc before instruction is decoded
         uint16_t pcint = cpu.get_PC();
@@ -691,7 +693,7 @@ void Emulator::nes_test() {
             test_log << line[i];
         }
         test_log << std::endl;
-        if (pc == "66CE") {
+        if (lines >= 8991) {
             running = false;
         }
     }

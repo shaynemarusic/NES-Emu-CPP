@@ -911,6 +911,93 @@ void CPU::decode() {
         case 0x13:
             SLO(indYAdd(low_nibble));
             break;
+        // RLA instructions
+        // RLA zpg
+        case 0x27:
+            RLA(zpgAdd(low_nibble));
+            break;
+        // RLA zpg, X
+        case 0x37:
+            RLA(zpgXAdd(low_nibble));
+            break;
+        // RLA abs
+        case 0x2F:
+            RLA(absAdd(low_nibble, high_nibble));
+            break;
+        // RLA abs, X
+        case 0x3F:
+            RLA(absXAdd(low_nibble, high_nibble));
+            break;
+        // RLA abs, Y
+        case 0x3B:
+            RLA(absYAdd(low_nibble, high_nibble));
+            break;
+        // RLA ind, X
+        case 0x23:
+            RLA(XindAdd(low_nibble));
+            break;
+        // RLA ind, Y
+        case 0x33:
+            RLA(indYAdd(low_nibble));
+            break;
+        // SRE instructions
+        // SRE zpg
+        case 0x47:
+            SRE(zpgAdd(low_nibble));
+            break;
+        // SRE zpg, X
+        case 0x57:
+            SRE(zpgXAdd(low_nibble));
+            break;
+        // SRE abs
+        case 0x4F:
+            SRE(absAdd(low_nibble, high_nibble));
+            break;
+        // SRE abs, X
+        case 0x5F:
+            SRE(absXAdd(low_nibble, high_nibble));
+            break;
+        // SRE abs, Y
+        case 0x5B:
+            SRE(absYAdd(low_nibble, high_nibble));
+            break;
+        // SRE ind, X
+        case 0x43:
+            SRE(XindAdd(low_nibble));
+            break;
+        // SRE ind, Y
+        case 0x53:
+            SRE(indYAdd(low_nibble));
+            break;
+        // RRA Instructions
+        // RRA zpg
+        case 0x67:
+            RRA(zpgAdd(low_nibble));
+            break;
+        // RRA zpg, X
+        case 0x77:
+            RRA(zpgXAdd(low_nibble));
+            break;
+        // RRA abs
+        case 0x6F:
+            RRA(absAdd(low_nibble, high_nibble));
+            break;
+        // RRA abs, X
+        case 0x7F:
+            RRA(absXAdd(low_nibble, high_nibble));
+            break;
+        // RRA abs, Y
+        case 0x7B:
+            RRA(absYAdd(low_nibble, high_nibble));
+            break;
+        // RRA ind, X
+        case 0x63:
+            RRA(XindAdd(low_nibble));
+            break;
+        // RRA ind, Y
+        case 0x73:
+            RRA(indYAdd(low_nibble));
+            break;
         default:
             //Throw an exception - ADD LATER
             throw std::invalid_argument("Error: Invalid opcode " + std::to_string(opcode) + " decoded");
@@ -1133,6 +1220,30 @@ void CPU::SLO(uint16_t address) {
 
     ASL(address);
     ORA(memory[address]);
+
+}
+
+// Performs a ROL and an AND
+void CPU::RLA(uint16_t address) {
+
+    ROL(address);
+    AND(memory[address]);
+
+}
+
+// Performs an LSR and an EOR
+void CPU::SRE(uint16_t address) {
+
+    LSR(address);
+    EOR(memory[address]);
+
+}
+
+// Performs a ROR and an ADC
+void CPU::RRA(uint16_t address) {
+
+    ROR(address);
+    ADC(memory[address]);
 
 }
 
@@ -1536,6 +1647,10 @@ void CPU::RTI() {
 void CPU::write(uint16_t address, uint8_t& val) {
     // Mirror in correct location
     // Three mirrors in this range
+    if (address > 0x1fff && address <= 0x401f) {
+        programCounter++;
+        programCounter--;
+    }
     if (address <= 0x1FFF) {
         uint16_t mirror = (address + 0x800) % 0x2000;
         memory[mirror] = val;
