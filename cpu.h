@@ -94,19 +94,22 @@ class CPU {
         void SEI();
 
         //Branch Instructions
-        void BCC(uint8_t operand);
-        void BCS(uint8_t operand);
-        void BEQ(uint8_t operand);
-        void BMI(uint8_t operand);
-        void BNE(uint8_t operand);
-        void BPL(uint8_t operand);
-        void BVC(uint8_t operand);
-        void BVS(uint8_t operand);
+        void BCC(int8_t operand);
+        void BCS(int8_t operand);
+        void BEQ(int8_t operand);
+        void BMI(int8_t operand);
+        void BNE(int8_t operand);
+        void BPL(int8_t operand);
+        void BVC(int8_t operand);
+        void BVS(int8_t operand);
 
         //Load and Store Instructions
         void LDA(uint8_t operand);
         void LDX(uint8_t operand);
         void LDY(uint8_t operand);
+        // Unofficial Loads and Stores
+        void LAX(uint8_t operand);
+        void SAX(uint16_t address);
         // void STA(uint16_t address);
         // void STX(uint16_t address);
         // void STY(uint16_t address);

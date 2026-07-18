@@ -778,6 +778,48 @@ void CPU::decode() {
             break;
         case 0xFA:
             break;
+        // LAX instructions
+        // LAX zpg
+        case 0xA7:
+            LAX(zpg(low_nibble));
+            break;
+        // LAX zpg, Y
+        case 0xB7:
+            LAX(zpgY(low_nibble));
+            break;
+        // LAX abs
+        case 0xAF:
+            LAX(abs(low_nibble, high_nibble));
+            break;
+        // LAX abs, Y
+        case 0xBF:
+            LAX(absY(low_nibble, high_nibble));
+            break;
+        // LAX ind, X
+        case 0xA3:
+            LAX(Xind(low_nibble));
+            break;
+        // LAX ind, Y
+        case 0xB3:
+            LAX(indY(low_nibble));
+            break;
+        // SAX instructions
+        // SAX zpg
+        case 0x87:
+            SAX(zpgAdd(low_nibble));
+            break;
+        // SAX zpg, Y
+        case 0x97:
+            SAX(zpgYAdd(low_nibble));
+            break;
+        // SAX abs
+        case 0x8F:
+            SAX(absAdd(low_nibble, high_nibble));
+            break;
+        // SAX ind, X
+        case 0x83:
+            SAX(XindAdd(low_nibble));
+            break;
         default:
             //Throw an exception - ADD LATER
             throw std::invalid_argument("Error: Invalid opcode " + std::to_string(opcode) + " decoded");
@@ -1127,80 +1169,32 @@ void CPU::SEI() { statusRegister = statusRegister | 0x4; }
 
 //Branch on carry clear
 //If the carry bit is 0, branch to programCounter + operand
-void CPU::BCC(uint8_t operand) { 
-    if ((statusRegister & 0x1) == 0) {
-        uint8_t low = programCounter;
-        low += operand;
-        programCounter = (programCounter & 0xFF00) | low;
-    } 
-}
+void CPU::BCC(int8_t operand) { programCounter += (statusRegister & 0x1) == 0 ? operand : 0; }
 
 //Branch on carry set
-void CPU::BCS(uint8_t operand) { 
-    if ((statusRegister & 0x1) == 0x1) {
-        uint8_t low = programCounter;
-        low += operand;
-        programCounter = (programCounter & 0xFF00) | low;
-    } 
-}
+void CPU::BCS(int8_t operand) { programCounter += (statusRegister & 0x1) == 0x1 ? operand : 0; }
 
 //Branch on zero set (aka branch on equal)
 //Branch if the zero bit is set
-void CPU::BEQ(uint8_t operand) { 
-    if ((statusRegister & 0x2) == 0x2) {
-        uint8_t low = programCounter;
-        low += operand;
-        programCounter = (programCounter & 0xFF00) | low;
-    } 
-}
+void CPU::BEQ(int8_t operand) { programCounter += (statusRegister & 0x2) == 0x2 ? operand : 0; }
 
 //Branch on result minus
 //Branch if the sign bit is set
-void CPU::BMI(uint8_t operand) { 
-    if ((statusRegister & 0x80) == 0x80) {
-        uint8_t low = programCounter;
-        low += operand;
-        programCounter = (programCounter & 0xFF00) | low;
-    } 
-}
+void CPU::BMI(int8_t operand) { programCounter += (statusRegister & 0x80) == 0x80 ? operand : 0; }
 
 //Branch on zero clear (aka branch on not equal)
-void CPU::BNE(uint8_t operand) { 
-    if ((statusRegister & 0x2) == 0) {
-        uint8_t low = programCounter;
-        low += operand;
-        programCounter = (programCounter & 0xFF00) | low;
-    } 
-}
+void CPU::BNE(int8_t operand) { programCounter += (statusRegister & 0x2) == 0 ? operand : 0; }
 
 //Branch on result plus
 //Branch if the sign bit is cleared
-void CPU::BPL(uint8_t operand) { 
-    if ((statusRegister & 0x80) == 0) {
-        uint8_t low = programCounter;
-        low += operand;
-        programCounter = (programCounter & 0xFF00) | low;
-    } 
-}
+void CPU::BPL(int8_t operand) { programCounter += (statusRegister & 0x80) == 0 ? operand : 0; }
 
 //Branch on overflow clear
 //Branch if the overflow bit is set to 0
-void CPU::BVC(uint8_t operand) { 
-    if ((statusRegister & 0x40) == 0) {
-        uint8_t low = programCounter;
-        low += operand;
-        programCounter = (programCounter & 0xFF00) | low;
-    }
-}
+void CPU::BVC(int8_t operand) { programCounter += (statusRegister & 0x40) == 0 ? operand : 0; }
 
 //Branch on overflow set
-void CPU::BVS(uint8_t operand) { 
-    if ((statusRegister & 0x40) == 0x40) {
-        uint8_t low = programCounter;
-        low += operand;
-        programCounter = (programCounter & 0xFF00) | low;
-    } 
-}
+void CPU::BVS(int8_t operand) { programCounter += (statusRegister & 0x40) == 0x40 ? operand : 0; }
 
 //Load and Store Instructions
 
@@ -1226,6 +1220,25 @@ void CPU::LDY(uint8_t operand) {
 
     yReg = operand;
     statusRegister = (yReg & 0x80) | (yReg == 0 ? 0x2 : 0) | (statusRegister & 0x7D);
+
+}
+
+// Unofficial Loads and Stores
+// Loads the x register and the accumulator with the operand
+// Affects the same flags as both instructions
+void CPU::LAX(uint8_t operand) {
+
+    accumulator = operand;
+    xReg = operand;
+    statusRegister = (accumulator & 0x80) | (accumulator == 0 ? 0x2 : 0) | (statusRegister & 0x7D);
+
+}
+
+// AND the accumulator and x register and store the result at address
+void CPU::SAX(uint16_t address) {
+
+    uint8_t val = accumulator & xReg;
+    write(address, val);
 
 }
 
