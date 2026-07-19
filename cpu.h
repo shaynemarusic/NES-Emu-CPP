@@ -68,11 +68,6 @@ class CPU {
         void ROLA();
         void ROR(uint16_t address);
         void RORA();
-        // Unofficial Shifts
-        void SLO(uint16_t address);
-        void RLA(uint16_t address);
-        void SRE(uint16_t address);
-        void RRA(uint16_t address);
 
         //Arithmetic Instructions
         void ADC(uint8_t operand);
@@ -88,9 +83,6 @@ class CPU {
         void INC(uint16_t address);
         void INX();
         void INY();
-        // Unofficial Increments
-        void DCP(uint16_t address);
-        void ISB(uint16_t address);
 
         //Flag Instructions
         void CLC();
@@ -115,9 +107,6 @@ class CPU {
         void LDA(uint8_t operand);
         void LDX(uint8_t operand);
         void LDY(uint8_t operand);
-        // Unofficial Loads and Stores
-        void LAX(uint8_t operand);
-        void SAX(uint16_t address);
         // void STA(uint16_t address);
         // void STX(uint16_t address);
         // void STY(uint16_t address);
@@ -152,6 +141,20 @@ class CPU {
         void RTS();
         void BRK();
         void RTI();
+
+        // Unofficial Instructions
+        void LAX(uint8_t operand);
+        void SAX(uint16_t address);
+        void DCP(uint16_t address);
+        void ISB(uint16_t address);
+        void SLO(uint16_t address);
+        void RLA(uint16_t address);
+        void SRE(uint16_t address);
+        void RRA(uint16_t address);
+        void ALR(uint16_t address);
+        void ANC(uint8_t operand);
+        void ARR(uint16_t address);
+        void LAS(uint8_t operand);
 
         //Addressing modes
         uint8_t Xind(uint8_t low);

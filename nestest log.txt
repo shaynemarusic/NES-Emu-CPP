@@ -8986,3 +8986,6 @@ C695  8D 05 40  STA $4005 = 00                  A:9A X:FF Y:15 P:A5 SP:FB PPU:23
 C698  A9 FF     LDA #$FF                        A:9A X:FF Y:15 P:A5 SP:FB PPU:233,155 CYC:26536
 C69A  8D 06 40  STA $4006 = 00                  A:FF X:FF Y:15 P:A5 SP:FB PPU:233,161 CYC:26538
 C69D  A9 00     LDA #$00                        A:FF X:FF Y:15 P:A5 SP:FB PPU:233,173 CYC:26542
+C69F  8D 07 40  STA $4007 = 00                  A:00 X:FF Y:15 P:27 SP:FB PPU:233,179 CYC:26544
+C6A2  60        RTS                             A:00 X:FF Y:15 P:27 SP:FB PPU:233,191 CYC:26548
+C66E  60        RTS                             A:00 X:FF Y:15 P:27 SP:FD PPU:233,209 CYC:26554

@@ -998,6 +998,26 @@ void CPU::decode() {
         case 0x73:
             RRA(indYAdd(low_nibble));
             break;
+        // ALR #
+        case 0x4B:
+            ALR(low_nibble);
+            break;
+        // ANC #
+        case 0x0B:
+            ANC(low_nibble);
+            break;
+        // ANC #... again
+        case 0x2B:
+            ANC(low_nibble);
+            break;
+        // ARR #
+        case 0x6B:
+            ARR(low_nibble);
+            break;
+        // LAS abs, Y
+        case 0xBB:
+            LAS(absY(low_nibble, high_nibble));
+            break;
         default:
             //Throw an exception - ADD LATER
             throw std::invalid_argument("Error: Invalid opcode " + std::to_string(opcode) + " decoded");
@@ -1214,31 +1234,6 @@ void CPU::RORA() {
 
 }
 
-// Unofficial Shifts
-// Performs an ASL and an ORA
-void CPU::SLO(uint16_t address) {
-
-    ASL(address);
-    ORA(memory[address]);
-
-}
-
-// Performs a ROL and an AND
-void CPU::RLA(uint16_t address) {
-
-    ROL(address);
-    AND(memory[address]);
-
-}
-
-// Performs an LSR and an EOR
-void CPU::SRE(uint16_t address) {
-
-    LSR(address);
-    EOR(memory[address]);
-
-}
-
 // Performs a ROR and an ADC
 void CPU::RRA(uint16_t address) {
 
@@ -1353,23 +1348,6 @@ void CPU::INY() {
 
 }
 
-// Unofficial Increments
-// Decrements operand and compares it to accumulator
-void CPU::DCP(uint16_t address) { 
-
-    DEC(address);
-    CMP(memory[address]);
-
- }
-
- // Increments operand and performs SBC
- void CPU::ISB(uint16_t address) {
-
-    INC(address);
-    SBC(memory[address]);
-
- }
-
 //Flag Instructions
 
 //Clears the carry flag
@@ -1448,25 +1426,6 @@ void CPU::LDY(uint8_t operand) {
 
     yReg = operand;
     statusRegister = (yReg & 0x80) | (yReg == 0 ? 0x2 : 0) | (statusRegister & 0x7D);
-
-}
-
-// Unofficial Loads and Stores
-// Loads the x register and the accumulator with the operand
-// Affects the same flags as both instructions
-void CPU::LAX(uint8_t operand) {
-
-    accumulator = operand;
-    xReg = operand;
-    statusRegister = (accumulator & 0x80) | (accumulator == 0 ? 0x2 : 0) | (statusRegister & 0x7D);
-
-}
-
-// AND the accumulator and x register and store the result at address
-void CPU::SAX(uint16_t address) {
-
-    uint8_t val = accumulator & xReg;
-    write(address, val);
 
 }
 
@@ -1641,16 +1600,106 @@ void CPU::RTI() {
     programCounter = absAdd(low, high);
 }
 
+// Unofficial Instructions
+// Performs an ASL and an ORA
+void CPU::SLO(uint16_t address) {
+
+    ASL(address);
+    ORA(memory[address]);
+
+}
+
+// Performs a ROL and an AND
+void CPU::RLA(uint16_t address) {
+
+    ROL(address);
+    AND(memory[address]);
+
+}
+
+// Performs an LSR and an EOR
+void CPU::SRE(uint16_t address) {
+
+    LSR(address);
+    EOR(memory[address]);
+
+}
+
+// An AND and an LSR
+void CPU::ALR(uint16_t address) {
+
+    AND(memory[address]);
+    LSR(address);
+
+}
+
+// Decrements operand and compares it to accumulator
+void CPU::DCP(uint16_t address) { 
+
+    DEC(address);
+    CMP(memory[address]);
+
+ }
+
+ // Increments operand and performs SBC
+ void CPU::ISB(uint16_t address) {
+
+    INC(address);
+    SBC(memory[address]);
+
+ }
+
+// Loads the x register and the accumulator with the operand
+// Affects the same flags as both instructions
+void CPU::LAX(uint8_t operand) {
+
+    accumulator = operand;
+    xReg = operand;
+    statusRegister = (accumulator & 0x80) | (accumulator == 0 ? 0x2 : 0) | (statusRegister & 0x7D);
+
+}
+
+// AND the accumulator and x register and store the result at address
+void CPU::SAX(uint16_t address) {
+
+    uint8_t val = accumulator & xReg;
+    write(address, val);
+
+}
+
+// AND the operand and set carry bit to the 7th bit
+void CPU::ANC(uint8_t operand) {
+
+    AND(operand);
+    statusRegister = (statusRegister & 0xFE) | (accumulator >> 7);
+
+}
+
+// AND an a ROR
+void CPU::ARR(uint16_t address) {
+
+    AND(memory[address]);
+    ROR(address);
+
+}
+
+// AND the operand with the stack pointer, transfer result to accumulator, x register, and stack pointer
+void CPU::LAS(uint8_t operand) {
+
+    uint8_t result = operand & stackPointer;
+    stackPointer = result;
+    xReg = result;
+    accumulator = result;
+    statusRegister = (result & 0x80) | ((result == 0) ? 0x2 : 0) | (statusRegister & 0x7D);
+
+}
+
 //Mapper Write function implementations
 
 // Base write function from which the mapper writes are called
 void CPU::write(uint16_t address, uint8_t& val) {
     // Mirror in correct location
     // Three mirrors in this range
-    if (address > 0x1fff && address <= 0x401f) {
-        programCounter++;
-        programCounter--;
-    }
     if (address <= 0x1FFF) {
         uint16_t mirror = (address + 0x800) % 0x2000;
         memory[mirror] = val;
