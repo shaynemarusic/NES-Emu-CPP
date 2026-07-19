@@ -155,6 +155,7 @@ class CPU {
         void ANC(uint8_t operand);
         void ARR(uint16_t address);
         void LAS(uint8_t operand);
+        void SBX(uint8_t operand);
 
         //Addressing modes
         uint8_t Xind(uint8_t low);

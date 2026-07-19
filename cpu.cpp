@@ -1018,6 +1018,10 @@ void CPU::decode() {
         case 0xBB:
             LAS(absY(low_nibble, high_nibble));
             break;
+        // SBX #
+        case 0xCB:
+            SBX(low_nibble);
+            break;
         default:
             //Throw an exception - ADD LATER
             throw std::invalid_argument("Error: Invalid opcode " + std::to_string(opcode) + " decoded");
@@ -1693,6 +1697,17 @@ void CPU::LAS(uint8_t operand) {
     statusRegister = (result & 0x80) | ((result == 0) ? 0x2 : 0) | (statusRegister & 0x7D);
 
 }
+
+// AND x register and accumulator, store result in x reg, and subtract operand from x
+void CPU::SBX(uint8_t operand) {
+
+    statusRegister = (statusRegister & 0xFE) | (operand > (xReg & accumulator) ? 1 : 0);
+    xReg = (xReg & accumulator) - operand;
+    statusRegister = (xReg == 0 ? 0x2 : 0) | (xReg & 0x80) | (statusRegister & 0xFD);
+
+}
+
+
 
 //Mapper Write function implementations
 
