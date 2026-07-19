@@ -583,6 +583,7 @@ void Emulator::nes_test() {
     };
 
     int lines = 0;
+    int cycles = 7;
     running = true;
     std::string line;
     while (running) {
@@ -682,17 +683,18 @@ void Emulator::nes_test() {
         }
 
         // Decode and execute instruction
-        cpu.decode();
+        int temp = cpu.decode();
 
         // Write state of registers
-        test_log << "A:" << acc << " X:" << x << " Y:" << y << " P:" << p << " SP:" << sp << " ";
+        test_log << "A:" << acc << " X:" << x << " Y:" << y << " P:" << p << " SP:" << sp << " PPU:";
 
         // TODO: Add PPU and cycle info
         // Hackey bs for the sake of comparing files
-        for (int i = 74; i < line.size(); i++) {
+        for (int i = 78; i < line.size() && line[i] != ':'; i++) {
             test_log << line[i];
         }
-        test_log << std::endl;
+        test_log << ":" << std::to_string(cycles) << std::endl;
+        cycles += temp;
         if (lines >= 8991) {
             running = false;
         }

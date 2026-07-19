@@ -35,6 +35,7 @@ class CPU {
         int mem_map;
         // Opcode and operand vars
         uint8_t opcode, high_nibble, low_nibble;
+        int cyc_cnt;
         //This may or may not be necessary
 
         //Memory
@@ -177,13 +178,15 @@ class CPU {
         uint16_t zpgYAdd(uint8_t low);
         uint16_t indAdd(uint8_t low, uint8_t high);
 
+        bool pageCrossed(uint16_t address, uint8_t operand);
+
     public:
         CPU(int memory_mapper);
         CPU();
         void manual_reset();
         //Destructor may or may not be needed. Depends on implementation details yet to be ironed out
         //~CPU();
-        void decode();
+        int decode();
         void interrupt_reset();
         void interrupt_IRQ_generic();
         void interrupt_NMI();

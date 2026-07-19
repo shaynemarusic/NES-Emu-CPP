@@ -39,6 +39,42 @@ constexpr uint8_t pcIncrement[256] = {
     2,2,1,2,2,2,2,2,1,3,1,3,3,3,3,3
 };
 
+// Table of all cycle counts...
+constexpr uint8_t cycles[256] = {
+    // 0x00
+    7,6,0,8,3,3,5,5,3,2,2,2,4,4,6,6,
+    // 0x10
+    2,5,0,8,4,4,6,6,2,4,2,7,4,4,7,7,
+    // 0x20
+    6,6,0,8,3,3,5,5,4,2,2,2,4,4,6,6,
+    // 0x30
+    2,5,0,8,4,4,6,6,2,4,2,7,4,4,7,7,
+    // 0x40
+    6,6,0,8,3,3,5,5,3,2,2,2,3,4,6,6,
+    // 0x50
+    2,5,0,8,4,4,6,6,2,4,2,7,4,4,7,7,
+    // 0x60
+    6,6,0,8,3,3,5,5,4,2,2,2,5,4,6,6,
+    // 0x70
+    2,5,0,8,4,4,6,6,2,4,2,7,4,4,7,7,
+    // 0x80
+    2,6,2,6,3,3,3,3,2,2,2,0,4,4,4,4,
+    // 0x90
+    2,6,0,0,4,4,4,4,2,5,2,0,0,5,0,0,
+    // 0xA0
+    2,6,2,6,3,3,3,3,2,2,2,2,4,4,4,4,
+    // 0xB0
+    2,5,0,5,4,4,4,4,2,4,2,0,4,4,4,4,
+    // 0xC0
+    2,6,2,8,3,3,5,5,2,2,2,2,4,4,6,6,
+    // 0xD0
+    2,5,0,8,4,4,6,6,2,4,2,7,4,4,7,7,
+    // 0xE0
+    2,6,2,8,3,3,5,5,2,2,2,2,4,4,6,6,
+    // 0xF0
+    2,5,0,8,4,4,6,6,2,4,2,7,4,4,7,7
+};
+
 //The main constructor
 CPU::CPU(int memory_mapper) {
 
@@ -83,7 +119,8 @@ void CPU::manual_reset() {
 }
 
 //Decodes and executes instructions
-void CPU::decode() {
+// Returns the number of cycles used by executing the instruction in full
+int CPU::decode() {
 
     opcode = memory[programCounter];
     low_nibble = memory[programCounter + 1];
@@ -91,6 +128,7 @@ void CPU::decode() {
 
     //Need to add an additional check to see if the opcode is valid - will do later
     programCounter += pcIncrement[opcode];
+    cyc_cnt = cycles[opcode];
 
     //Switch over the low order nibble
     /*Operands indicate addressing mode. Note that 6502 is little endian so addresses are stored in memory least significant byte first
@@ -156,6 +194,7 @@ void CPU::decode() {
             break;
         //ORA ind, Y
         case 0x11:
+            cyc_cnt += pageCrossed(indAdd(low_nibble, 0), yReg) ? 1 : 0;
             ORA(indY(low_nibble));
             break;
         //ORA zpg, X
@@ -172,10 +211,12 @@ void CPU::decode() {
             break;
         //ORA abs, Y
         case 0x19:
+            cyc_cnt += pageCrossed(absAdd(low_nibble, high_nibble), yReg) ? 1 : 0;
             ORA(absY(low_nibble, high_nibble));
             break;
         //ORA abs, X
         case 0x1D:
+            cyc_cnt += pageCrossed(absAdd(low_nibble, high_nibble), xReg) ? 1 : 0;
             ORA(absX(low_nibble, high_nibble));
             break;
         //ASL abs, X
@@ -232,6 +273,7 @@ void CPU::decode() {
             break;
         //AND ind, Y
         case 0x31:
+            cyc_cnt += pageCrossed(indAdd(low_nibble, 0), yReg) ? 1 : 0;
             AND(indY(low_nibble));
             break;
         //AND zpg, X
@@ -248,10 +290,12 @@ void CPU::decode() {
             break;
         //AND abs, Y
         case 0x39:
+            cyc_cnt += pageCrossed(absAdd(low_nibble, high_nibble), yReg) ? 1 : 0;
             AND(absY(low_nibble, high_nibble));
             break;
         //AND abs, X
         case 0x3D:
+            cyc_cnt += pageCrossed(absAdd(low_nibble, high_nibble), xReg) ? 1 : 0;
             AND(absX(low_nibble, high_nibble));
             break;
         //ROL abs, X
@@ -304,6 +348,7 @@ void CPU::decode() {
             break;
         //EOR ind, Y
         case 0x51:
+            cyc_cnt += pageCrossed(indAdd(low_nibble, 0), yReg) ? 1 : 0;
             EOR(indY(low_nibble));
             break;
         //EOR zpg, X
@@ -320,10 +365,12 @@ void CPU::decode() {
             break;
         //EOR abs, Y
         case 0x59:
+            cyc_cnt += pageCrossed(absAdd(low_nibble, high_nibble), yReg) ? 1 : 0;
             EOR(absY(low_nibble, high_nibble));
             break;
         //EOR abs, X
         case 0x5D:
+            cyc_cnt += pageCrossed(absAdd(low_nibble, high_nibble), xReg) ? 1 : 0;
             EOR(absX(low_nibble, high_nibble));
             break;
         //LSR abs, X
@@ -360,6 +407,7 @@ void CPU::decode() {
             break;
         //JMP ind
         case 0x6C:
+            cyc_cnt += pageCrossed(indAdd(low_nibble, high_nibble), 1) ? 1 : 0;
             JMP(indAdd(low_nibble, high_nibble));
             break;
         //ADC abs
@@ -376,6 +424,7 @@ void CPU::decode() {
             break;
         //ADC ind, Y
         case 0x71:
+            cyc_cnt += pageCrossed(indAdd(low_nibble, 0), yReg) ? 1 : 0;
             ADC(indY(low_nibble));
             break;
         //ADC zpg, X
@@ -392,10 +441,12 @@ void CPU::decode() {
             break;
         //ADC abs, Y
         case 0x79:
+            cyc_cnt += pageCrossed(absAdd(low_nibble, high_nibble), yReg) ? 1 : 0;
             ADC(absY(low_nibble, high_nibble));
             break;
         //ADC abs, X
         case 0x7D:
+            cyc_cnt += pageCrossed(absAdd(low_nibble, high_nibble), xReg) ? 1 : 0;
             ADC(absX(low_nibble, high_nibble));
             break;
         //ROR abs, X
@@ -528,6 +579,7 @@ void CPU::decode() {
             break;
         //LDA ind, Y
         case 0xB1:
+            cyc_cnt += pageCrossed(indAdd(low_nibble, 0), yReg) ? 1 : 0;
             LDA(indY(low_nibble));
             break;
         //LDY zpg, X
@@ -548,6 +600,7 @@ void CPU::decode() {
             break;
         //LDA abs, Y
         case 0xB9:
+            cyc_cnt += pageCrossed(absAdd(low_nibble, high_nibble), yReg) ? 1 : 0;
             LDA(absY(low_nibble, high_nibble));
             break;
         //TSX impl
@@ -556,14 +609,17 @@ void CPU::decode() {
             break;
         //LDY abs, X
         case 0xBC:
+            cyc_cnt += pageCrossed(absAdd(low_nibble, high_nibble), xReg) ? 1 : 0;
             LDY(absX(low_nibble, high_nibble));
             break;
         //LDA abs, X
         case 0xBD:
+            cyc_cnt += pageCrossed(absAdd(low_nibble, high_nibble), xReg) ? 1 : 0;
             LDA(absX(low_nibble, high_nibble));
             break;
         //LDX abs, Y
         case 0xBE:
+            cyc_cnt += pageCrossed(absAdd(low_nibble, high_nibble), yReg) ? 1 : 0;
             LDX(absY(low_nibble, high_nibble));
             break;
         //CPY #
@@ -616,6 +672,7 @@ void CPU::decode() {
             break;
         //CMP ind, Y
         case 0xD1:
+            cyc_cnt += pageCrossed(indAdd(low_nibble, 0), yReg) ? 1 : 0;
             CMP(indY(low_nibble));
             break;
         //CMP zpg, X
@@ -632,10 +689,12 @@ void CPU::decode() {
             break;
         //CMP abs, Y
         case 0xD9:
+            cyc_cnt += pageCrossed(absAdd(low_nibble, high_nibble), yReg) ? 1 : 0;
             CMP(absY(low_nibble, high_nibble));
             break;
         //CMP abs, X
         case 0xDD:
+            cyc_cnt += pageCrossed(absAdd(low_nibble, high_nibble), xReg) ? 1 : 0;
             CMP(absX(low_nibble, high_nibble));
             break;
         //DEC abs, X
@@ -691,6 +750,7 @@ void CPU::decode() {
             break;
         //SBC ind, Y
         case 0xF1:
+            cyc_cnt += pageCrossed(indAdd(low_nibble, 0), yReg) ? 1 : 0;
             SBC(indY(low_nibble));
             break;
         //SBC zpg, X
@@ -707,10 +767,12 @@ void CPU::decode() {
             break;
         //SBC abs, Y
         case 0xF9:
+            cyc_cnt += pageCrossed(absAdd(low_nibble, high_nibble), yReg) ? 1 : 0;
             SBC(absY(low_nibble, high_nibble));
             break;
         //SBC abs, X
         case 0xFD:
+            cyc_cnt += pageCrossed(absAdd(low_nibble, high_nibble), xReg) ? 1 : 0;
             SBC(absX(low_nibble, high_nibble));
             break;
         //INC abs, X
@@ -730,16 +792,22 @@ void CPU::decode() {
             break;
         // Next 6 are NOP abs,x - 3 bytes, variable cycles based on page breaks
         case 0x1C:
+            cyc_cnt += pageCrossed(absAdd(low_nibble, high_nibble), xReg) ? 1 : 0;
             break;
         case 0x3C:
+            cyc_cnt += pageCrossed(absAdd(low_nibble, high_nibble), xReg) ? 1 : 0;
             break;
         case 0x5C:
+            cyc_cnt += pageCrossed(absAdd(low_nibble, high_nibble), xReg) ? 1 : 0;
             break;
         case 0x7C:
+            cyc_cnt += pageCrossed(absAdd(low_nibble, high_nibble), xReg) ? 1 : 0;
             break;
         case 0xDC:
+            cyc_cnt += pageCrossed(absAdd(low_nibble, high_nibble), xReg) ? 1 : 0;
             break;
         case 0xFC:
+            cyc_cnt += pageCrossed(absAdd(low_nibble, high_nibble), xReg) ? 1 : 0;
             break;
         // Next 6 are NOP zpg,x - 2 bytes, 4 cycles
         case 0x14:
@@ -793,6 +861,7 @@ void CPU::decode() {
             break;
         // LAX abs, Y
         case 0xBF:
+            cyc_cnt += pageCrossed(absAdd(low_nibble, high_nibble), yReg) ? 1 : 0;
             LAX(absY(low_nibble, high_nibble));
             break;
         // LAX ind, X
@@ -801,6 +870,7 @@ void CPU::decode() {
             break;
         // LAX ind, Y
         case 0xB3:
+            cyc_cnt += pageCrossed(indAdd(low_nibble, 0), yReg) ? 1 : 0;
             LAX(indY(low_nibble));
             break;
         // SAX instructions
@@ -1025,8 +1095,9 @@ void CPU::decode() {
         default:
             //Throw an exception - ADD LATER
             throw std::invalid_argument("Error: Invalid opcode " + std::to_string(opcode) + " decoded");
-        
     }
+
+    return cyc_cnt;
 
 }
 
@@ -1118,6 +1189,13 @@ uint16_t CPU::zpgXAdd(uint8_t low) { return (low + xReg) & 0xFF; }
 
 //Zero Page, Y Indexed
 uint16_t CPU::zpgYAdd(uint8_t low) { return (low + yReg) & 0xFF; }
+
+// Check if a page is crossed by adding the operand to the address
+bool CPU::pageCrossed(uint16_t address, uint8_t operand) {
+    uint16_t high = address & 0xFF00;
+    address += operand;
+    return (address & 0xFF00) != high;
+}
 
 //Instructions
 
@@ -1376,35 +1454,101 @@ void CPU::SED() { statusRegister = statusRegister | 0x8; }
 void CPU::SEI() { statusRegister = statusRegister | 0x4; }
 
 //Branch Instructions
+// If a branch occurs on the same page, add 1 to the cycle count
+// If a branch occurs on a different page, add 2 to the cycle count
 
 //Branch on carry clear
 //If the carry bit is 0, branch to programCounter + operand
-void CPU::BCC(int8_t operand) { programCounter += (statusRegister & 0x1) == 0 ? operand : 0; }
+void CPU::BCC(int8_t operand) { 
+    
+    if ((statusRegister & 0x1) == 0) {
+        uint16_t high = programCounter & 0xFF00;
+        programCounter += operand;
+        cyc_cnt += ((programCounter & 0xFF00) != high) ? 2 : 1; 
+    }
+
+}
 
 //Branch on carry set
-void CPU::BCS(int8_t operand) { programCounter += (statusRegister & 0x1) == 0x1 ? operand : 0; }
+void CPU::BCS(int8_t operand) { 
+    
+    if ((statusRegister & 0x1) == 0x1) {
+        uint16_t high = programCounter & 0xFF00;
+        programCounter += operand;
+        cyc_cnt += ((programCounter & 0xFF00) != high) ? 2 : 1; 
+    }
+
+}
 
 //Branch on zero set (aka branch on equal)
 //Branch if the zero bit is set
-void CPU::BEQ(int8_t operand) { programCounter += (statusRegister & 0x2) == 0x2 ? operand : 0; }
+void CPU::BEQ(int8_t operand) { 
+    
+    if ((statusRegister & 0x2) == 0x2) {
+        uint16_t high = programCounter & 0xFF00;
+        programCounter += operand;
+        cyc_cnt += ((programCounter & 0xFF00) != high) ? 2 : 1; 
+    }
+
+}
 
 //Branch on result minus
 //Branch if the sign bit is set
-void CPU::BMI(int8_t operand) { programCounter += (statusRegister & 0x80) == 0x80 ? operand : 0; }
+void CPU::BMI(int8_t operand) { 
+    
+    if ((statusRegister & 0x80) == 0x80) {
+        uint16_t high = programCounter & 0xFF00;
+        programCounter += operand;
+        cyc_cnt += ((programCounter & 0xFF00) != high) ? 2 : 1; 
+    }
+
+}
 
 //Branch on zero clear (aka branch on not equal)
-void CPU::BNE(int8_t operand) { programCounter += (statusRegister & 0x2) == 0 ? operand : 0; }
+void CPU::BNE(int8_t operand) { 
+    
+    if ((statusRegister & 0x2) == 0) {
+        uint16_t high = programCounter & 0xFF00;
+        programCounter += operand;
+        cyc_cnt += ((programCounter & 0xFF00) != high) ? 2 : 1; 
+    }
+
+}
 
 //Branch on result plus
 //Branch if the sign bit is cleared
-void CPU::BPL(int8_t operand) { programCounter += (statusRegister & 0x80) == 0 ? operand : 0; }
+void CPU::BPL(int8_t operand) { 
+    
+    if ((statusRegister & 0x80) == 0) {
+        uint16_t high = programCounter & 0xFF00;
+        programCounter += operand;
+        cyc_cnt += ((programCounter & 0xFF00) != high) ? 2 : 1; 
+    }
+
+}
 
 //Branch on overflow clear
 //Branch if the overflow bit is set to 0
-void CPU::BVC(int8_t operand) { programCounter += (statusRegister & 0x40) == 0 ? operand : 0; }
+void CPU::BVC(int8_t operand) { 
+    
+    if ((statusRegister & 0x40) == 0) {
+        uint16_t high = programCounter & 0xFF00;
+        programCounter += operand;
+        cyc_cnt += ((programCounter & 0xFF00) != high) ? 2 : 1; 
+    }
+
+}
 
 //Branch on overflow set
-void CPU::BVS(int8_t operand) { programCounter += (statusRegister & 0x40) == 0x40 ? operand : 0; }
+void CPU::BVS(int8_t operand) { 
+    
+    if ((statusRegister & 0x40) == 0x40) {
+        uint16_t high = programCounter & 0xFF00;
+        programCounter += operand;
+        cyc_cnt += ((programCounter & 0xFF00) != high) ? 2 : 1; 
+    }
+
+}
 
 //Load and Store Instructions
 
