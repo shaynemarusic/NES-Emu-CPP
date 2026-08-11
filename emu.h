@@ -1,4 +1,5 @@
 #include "cpu.h"
+#include "ppu.h"
 
 class Emulator {
 
