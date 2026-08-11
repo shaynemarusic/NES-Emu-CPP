@@ -87,6 +87,8 @@ CPU::CPU(int memory_mapper) {
     programCounter = 0xFFFC;
 
     mem_map = memory_mapper;
+
+    ppu = nullptr;
 }
 
 //This should never be used in practice, but needs to exist so the compiler doesn't freak
@@ -104,6 +106,8 @@ CPU::CPU() {
     accumulator = 0;
 
     mem_map = 0;
+
+    ppu = nullptr;
 }
 
 // Used to reset the state of memory and other variables when a new ROM is loaded
@@ -117,6 +121,11 @@ void CPU::manual_reset() {
     yReg = 0;
     accumulator = 0;
 }
+
+// Gives the CPU a pointer to the PPU. This is mostly to expose the PPU registers to the CPU
+void CPU::link_ppu(PPU* _ppu) { ppu = _ppu; }
+
+void CPU::delink_ppu() { ppu = nullptr; }
 
 //Decodes and executes instructions
 // Returns the number of cycles used by executing the instruction in full
@@ -1869,15 +1878,54 @@ void CPU::write(uint16_t address, uint8_t& val) {
 
         memory[address] = val;
     }
-    // Mirrored every 8 bytes
-    else if (address <= 0x401F) {
-        uint16_t mirror = address;
-        for (int i = 0; i < 1024; i++) {
-            mirror = (mirror + 0x8) % 0x2000 + 0x2000;
-            memory[mirror] = val;
+    // PPU IO Registers - these are mirrored every 8 bytes in this region
+    else if (address <= 0x4000) {
+        if (ppu == nullptr) {
+            throw std::runtime_error("PPU not linked to CPU");
         }
 
-        memory[address] = val;
+        uint8_t low = (address & 0x00FF) % 8;
+        switch (low) {
+            // ppuctrl
+            case 0x00:
+                ppu->set_ppuctrl(val);
+                break;
+            // ppumask
+            case 0x01:
+                ppu->set_ppumask(val);
+                break;
+            // ppustatus
+            // Read only
+            case 0x02:
+                ppu->set_ppustatus(val);
+                break;
+            // oamaddr
+            case 0x03:
+                ppu->set_oamaddr(val);
+                break;
+            // oamdata
+            case 0x04:
+                ppu->set_oamdata(val);
+                break;
+            // ppuscroll
+            case 0x05:
+                ppu->set_ppuscroll(val);
+                break;
+            // ppuaddr
+            case 0x06:
+                ppu->set_ppuaddr(val);
+                break;
+            case 0x07:
+                ppu->set_ppudata(val);
+                break;
+            default:
+                throw std::runtime_error("Somehow, low is a value that isn't between 00 and 07");
+
+        }
+    }
+    // Additional IO Registers
+    else if (address <= 0x401F) {
+        // 
     }
     // Don't think anything needs to be done here tbh; no mirroring
     else if (address <= 0x7FFF) {

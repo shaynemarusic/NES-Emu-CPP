@@ -3,11 +3,13 @@
 #include <fstream>
 #include <unordered_map>
 #include <memory>
+#include "ppu.h"
 
 //This class represents the CPU (duh). The NES used the Ricoh 2AO3 which was a slightly modified MOS 6502
 class CPU {
 
     private:
+        PPU* ppu;
         //Registers
         //Stores results of arithmetic and logic operations
         uint8_t accumulator;
@@ -195,24 +197,37 @@ class CPU {
         //Setters/getters for cpu variables -- mostly used for testing/debugging
         void set_PC(uint16_t pc);
         uint16_t get_PC() const;
+
         void set_accumulator(uint8_t acc);
         uint8_t get_accumulator() const;
+
         void set_status(uint8_t status);
         uint8_t get_status() const;
+        
         void set_x(uint8_t x);
         uint8_t get_x() const;
+
         void set_y(uint8_t y);
         uint8_t get_y() const;
+
         void set_stack(uint8_t stack);
         uint8_t get_stack() const;
+
         void set_memMap(int memory_mapper);
         int get_memMap() const;
+
         void set_opcode(uint8_t op);
         uint8_t get_opcode() const;
+
         void set_high_nibble(uint8_t nibble);
         uint8_t get_high_nibble() const;
+
         void set_low_nibble(uint8_t nibble);
         uint8_t get_low_nibble() const;
+
+        void link_ppu(PPU* _ppu);
+        void delink_ppu();
+
         uint8_t get_next_low_nibble() const;
         uint8_t get_next_high_nibble() const;
         uint8_t get_next_opcode() const;

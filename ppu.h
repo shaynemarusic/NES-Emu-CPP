@@ -1,8 +1,37 @@
+#include <cstdint>
+#include <memory>
 
 // This class represents the PPU (duh, again). The NES used a 2C02
 class PPU {
 
     private:
+        // Memory mapped registers - these correlate to 0x2000 to 0x2007 of CPU memory and thus the CPU will have pointers to these
+        // 0x2000
+        uint8_t ppuctrl;
+        // 0x2001
+        uint8_t ppumask;
+        // 0x2002
+        uint8_t ppustatus;
+        // 0x2003
+        uint8_t oamaddr;
+        // 0x2004
+        uint8_t oamdata;
+        // 0x2005
+        uint8_t ppuscroll;
+        // 0x2006
+        uint8_t ppuaddr;
+        // 0x2007
+        uint8_t ppudata;
+        // 0x4014
+        uint8_t oamdma;
+
+        // The PPU alaso has 4 internal registers, but I'll get to those later
+
+        // Not sure if this is needed
+        int memory_mapper;
+        // Used to configure nametable mirroring
+        int vertical_mirroring;
+
         // Memory
         /*
         Like the CPU, the PPU can address 64KB of memory, though it only actually has 16 (addresses past 3FFF are wrapped around)
@@ -41,5 +70,40 @@ class PPU {
             Mirrors: 0x4000 - 0x10000
         */
     public:
+        std::unique_ptr<uint8_t[]> memory;
         PPU();
+
+        // Setters + Getters
+        void set_memory_mapper(int mapper);
+        int get_mapper() const;
+    
+        void set_mirroring(int vert);
+        int get_mirroring() const;
+
+        void set_ppuctrl(uint8_t value);
+        uint8_t get_ppuctrl() const;
+
+        void set_ppumask(uint8_t value);
+        uint8_t get_ppumask() const;
+
+        void set_ppustatus(uint8_t value);
+        uint8_t get_ppustatus() const;
+
+        void set_oamaddr(uint8_t value);
+        uint8_t get_oamaddr() const;
+
+        void set_oamdata(uint8_t value);
+        uint8_t get_oamdata() const;
+
+        void set_ppuscroll(uint8_t value);
+        uint8_t get_ppuscroll() const;
+
+        void set_ppuaddr(uint8_t value);
+        uint8_t get_ppuaddr() const;
+
+        void set_ppudata(uint8_t value);
+        uint8_t get_ppudata() const;
+
+        void set_oamdma(uint8_t value);
+        uint8_t get_oamdma() const;
 };
