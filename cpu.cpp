@@ -1115,7 +1115,7 @@ int CPU::decode() {
 uint8_t CPU::Xind(uint8_t low) {
 
     uint16_t exp = (low + xReg) & 0xFF;
-    return memory[((uint16_t) memory[(exp + 1) & 0xFF] << 8) | memory[exp]];
+    return read(((uint16_t) read((exp + 1) & 0xFF) << 8) | read(exp));
 
 }
 
@@ -1124,30 +1124,30 @@ uint8_t CPU::indY(uint8_t low) {
 
     // Bad naming convention but whatever
     uint8_t h, l;
-    l = memory[low];
-    h = memory[(low + 1) & 0xFF];
+    l = read(low);
+    h = read((low + 1) & 0xFF);
     uint16_t exp = (((uint16_t) h << 8) | l) + yReg;
-    return memory[exp];
+    return read(exp);
 
 }
 
 //Absolute
-uint8_t CPU::abs(uint8_t low, uint8_t high) { return memory[(((uint16_t) high) << 8) | low]; }
+uint8_t CPU::abs(uint8_t low, uint8_t high) { return read((((uint16_t) high) << 8) | low); }
 
 //Absolute, X Indexed
-uint8_t CPU::absX(uint8_t low, uint8_t high) { return memory[absXAdd(low, high)]; }
+uint8_t CPU::absX(uint8_t low, uint8_t high) { return read(absXAdd(low, high)); }
 
 //Absolute, Y Indexed
-uint8_t CPU::absY(uint8_t low, uint8_t high) { return memory[absYAdd(low, high)]; }
+uint8_t CPU::absY(uint8_t low, uint8_t high) { return read(absYAdd(low, high)); }
 
 //Zero Page
-uint8_t CPU::zpg(uint8_t low) { return memory[low]; }
+uint8_t CPU::zpg(uint8_t low) { return read(low); }
 
 //Zero Page, X Indexed
-uint8_t CPU::zpgX(uint8_t low) { return memory[(low + xReg) & 0xFF]; }
+uint8_t CPU::zpgX(uint8_t low) { return read((low + xReg) & 0xFF); }
 
 //Zero Page, Y Indexed
-uint8_t CPU::zpgY(uint8_t low) { return memory[(low + yReg) & 0xFF]; }
+uint8_t CPU::zpgY(uint8_t low) { return read((low + yReg) & 0xFF); }
 
 //Addressing modes - these ones return the addresses themselves
 
@@ -1158,7 +1158,7 @@ uint16_t CPU::indAdd(uint8_t low, uint8_t high) {
 
     uint16_t exp_low = ((uint16_t) high << 8) | low;
     uint16_t exp_high = ((uint16_t) high << 8) | ((low + 1) & 0xFF);
-    return ((uint16_t) memory[exp_high] << 8) | memory[exp_low];
+    return ((uint16_t) read(exp_high) << 8) | read(exp_low);
 
 }
 
@@ -1166,7 +1166,7 @@ uint16_t CPU::indAdd(uint8_t low, uint8_t high) {
 uint16_t CPU::XindAdd(uint8_t low) {
 
     uint16_t exp = (low + xReg) & 0xFF;
-    return ((uint16_t) memory[(exp + 1) & 0xFF] << 8) | memory[exp];
+    return ((uint16_t) read((exp + 1) & 0xFF) << 8) | read(exp);
 
 }
 
@@ -1174,8 +1174,8 @@ uint16_t CPU::XindAdd(uint8_t low) {
 uint16_t CPU::indYAdd(uint8_t low) {
 
     uint8_t h, l;
-    l = memory[low];
-    h = memory[(low + 1) & 0xFF];
+    l = read(low);
+    h = read((low + 1) & 0xFF);
     uint16_t exp = (((uint16_t) h << 8) | l) + yReg;
     return exp;
 
@@ -1251,9 +1251,9 @@ void CPU::BIT(uint8_t operand) {
 //Set the carry flag to the value of the shifted out bit
 void CPU::ASL(uint16_t address) {
 
-    uint8_t temp = memory[address] << 1;
-    statusRegister = (temp == 0 ? 0x2 : 0) | (temp & 0x80) | (memory[address] >> 7) | (statusRegister & 0x7C);
-    uint8_t shifted = memory[address] << 1;
+    uint8_t val = read(address);
+    uint8_t shifted = val << 1;
+    statusRegister = (shifted == 0 ? 0x2 : 0) | (shifted & 0x80) | (val >> 7) | (statusRegister & 0x7C);
     write(address, shifted);
 
 }
@@ -1273,8 +1273,9 @@ void CPU::ASLA() {
 //Set the carry bit to the bit shifted out
 void CPU::LSR(uint16_t address) {
 
-    statusRegister = ((memory[address] >> 1) == 0 ? 0x2 : 0) | (memory[address] & 0x1) | (statusRegister & 0x7C);
-    uint8_t shifted = memory[address] >> 1;
+    uint8_t val = read(address);
+    uint8_t shifted = val >> 1;
+    statusRegister = (shifted == 0 ? 0x2 : 0) | (val & 0x1) | (statusRegister & 0x7C);
     write(address, shifted);
      
 }
@@ -1292,9 +1293,10 @@ void CPU::LSRA() {
 //Performs a left shift but shifts in the carry bit instead of exclusively 0
 void CPU::ROL(uint16_t address) {
 
-    uint8_t temp = (memory[address] << 1) | (statusRegister & 0x1);
-    statusRegister = (temp == 0 ? 0x2 : 0) | (temp & 0x80) | (memory[address] >> 7) | (statusRegister & 0x7C);
-    write(address, temp);
+    uint8_t val = read(address);
+    uint8_t shifted = (val << 1) | (statusRegister & 0x1);
+    statusRegister = (shifted == 0 ? 0x2 : 0) | (shifted & 0x80) | (val >> 7) | (statusRegister & 0x7C);
+    write(address, shifted);
 
 }
 
@@ -1311,9 +1313,10 @@ void CPU::ROLA() {
 //Performs a right shift but shifts in the carry bit instead of exclusively 0
 void CPU::ROR(uint16_t address) {
 
-    uint8_t temp = (memory[address] >> 1) | ((statusRegister & 0x1) << 7);
-    statusRegister = (temp == 0 ? 0x2 : 0) | (memory[address] & 0x1) | (statusRegister & 0x7C) | (temp & 0x80);
-    write(address, temp);
+    uint8_t val = read(address);
+    uint8_t shifted = (val >> 1) | ((statusRegister & 0x1) << 7);
+    statusRegister = (shifted == 0 ? 0x2 : 0) | (val & 0x1) | (statusRegister & 0x7C) | (shifted & 0x80);
+    write(address, shifted);
 
 }
 
@@ -1329,7 +1332,7 @@ void CPU::RORA() {
 void CPU::RRA(uint16_t address) {
 
     ROR(address);
-    ADC(memory[address]);
+    ADC(read(address));
 
 }
 
@@ -1391,9 +1394,10 @@ void CPU::CPY(uint8_t operand) {
 //Only affects zero and sign flags
 void CPU::DEC(uint16_t address) {
 
-    uint8_t decremented = memory[address] - 1;
+    uint8_t val = read(address);
+    uint8_t decremented = val - 1;
     write(address, decremented);
-    statusRegister = (memory[address] & 0x80) | (memory[address] == 0 ? 0x2 : 0) | (statusRegister & 0x7D);
+    statusRegister = (decremented & 0x80) | (decremented == 0 ? 0x2 : 0) | (statusRegister & 0x7D);
 
 }
 
@@ -1417,9 +1421,10 @@ void CPU::DEY() {
 //Only affects zero and sign flags
 void CPU::INC(uint16_t address) {
 
-    uint8_t incremented = memory[address] + 1;
+    uint8_t val = read(address);
+    uint8_t incremented = val + 1;
     write(address, incremented);
-    statusRegister = (memory[address] & 0x80) | (memory[address] == 0 ? 0x2 : 0) | (statusRegister & 0x7D);
+    statusRegister = (incremented & 0x80) | (incremented == 0 ? 0x2 : 0) | (statusRegister & 0x7D);
 
 }
 
@@ -1672,7 +1677,7 @@ void CPU::PHP() {
 void CPU::PLA() {
 
     stackPointer++;
-    accumulator = memory[0x100 + stackPointer];
+    accumulator = read(0x100 + stackPointer);
     statusRegister = statusRegister = (accumulator & 0x80) | (accumulator == 0 ? 0x2 : 0) | (statusRegister & 0x7D);
 
 }
@@ -1682,7 +1687,7 @@ void CPU::PLA() {
 void CPU::PLP() {
 
     stackPointer++;
-    statusRegister = memory[0x100 + stackPointer] & 0xEF | 0x20;
+    statusRegister = read(0x100 + stackPointer) & 0xEF | 0x20;
 
 }
 
@@ -1717,7 +1722,7 @@ void CPU::JSR(uint16_t address) {
 void CPU::RTS() {
 
     stackPointer += 2;
-    programCounter = ((((uint16_t) memory[0x100 + stackPointer]) << 8) | ((uint16_t) memory[0x100 + stackPointer - 1] & 0xFF));
+    programCounter = ((((uint16_t) read(0x100 + stackPointer)) << 8) | ((uint16_t) read(0x100 + stackPointer - 1) & 0xFF));
     programCounter++;
 
 }
@@ -1740,8 +1745,8 @@ void CPU::BRK() {
     SEI();
 
     //Load address of interrupt handling routine from FFFE and FFFF
-    int8_t high = memory[0xFFFF];
-    int8_t low = memory[0xFFFE];
+    int8_t high = read(0xFFFF);
+    int8_t low = read(0xFFFE);
 
     programCounter = absAdd(low, high);
 }
@@ -1749,11 +1754,11 @@ void CPU::BRK() {
 // Return from interrupt - pulls the status register and program counter from the stack
 void CPU::RTI() {
     stackPointer++;
-    statusRegister = memory[stackPointer + 0x100] | 0x20;
+    statusRegister = read(stackPointer + 0x100) | 0x20;
     stackPointer++;
-    int8_t low = memory[stackPointer + 0x100];
+    int8_t low = read(stackPointer + 0x100);
     stackPointer++;
-    int8_t high = memory[stackPointer + 0x100];
+    int8_t high = read(stackPointer + 0x100);
     programCounter = absAdd(low, high);
 }
 
@@ -1762,7 +1767,7 @@ void CPU::RTI() {
 void CPU::SLO(uint16_t address) {
 
     ASL(address);
-    ORA(memory[address]);
+    ORA(read(address));
 
 }
 
@@ -1770,7 +1775,7 @@ void CPU::SLO(uint16_t address) {
 void CPU::RLA(uint16_t address) {
 
     ROL(address);
-    AND(memory[address]);
+    AND(read(address));
 
 }
 
@@ -1778,14 +1783,14 @@ void CPU::RLA(uint16_t address) {
 void CPU::SRE(uint16_t address) {
 
     LSR(address);
-    EOR(memory[address]);
+    EOR(read(address));
 
 }
 
 // An AND and an LSR
 void CPU::ALR(uint16_t address) {
 
-    AND(memory[address]);
+    AND(read(address));
     LSR(address);
 
 }
@@ -1794,7 +1799,7 @@ void CPU::ALR(uint16_t address) {
 void CPU::DCP(uint16_t address) { 
 
     DEC(address);
-    CMP(memory[address]);
+    CMP(read(address));
 
  }
 
@@ -1802,7 +1807,7 @@ void CPU::DCP(uint16_t address) {
  void CPU::ISB(uint16_t address) {
 
     INC(address);
-    SBC(memory[address]);
+    SBC(read(address));
 
  }
 
@@ -1835,7 +1840,7 @@ void CPU::ANC(uint8_t operand) {
 // AND an a ROR
 void CPU::ARR(uint16_t address) {
 
-    AND(memory[address]);
+    AND(read(address));
     ROR(address);
 
 }
@@ -1862,7 +1867,60 @@ void CPU::SBX(uint8_t operand) {
 
 
 
-//Mapper Write function implementations
+//Mapper Read/Write function implementations
+
+uint8_t CPU::read(uint16_t address) const {
+    uint8_t val;
+    if (address > 0x1FFF && address <= 0x4000) {
+        if (ppu == nullptr) {
+            throw std::runtime_error("PPU not linked to CPU");
+        }
+
+        uint8_t low = (address & 0x00FF) % 8;
+        // Most of the PPU MMIO registers are write only and will cause some open bus behavior if the CPU tries to read them
+        // Not sure it's super important to replicate that behavior, so will ignore for now
+        switch (low) {
+            // ppuctrl
+            case 0x00:
+                val = ppu->get_ppuctrl();
+                break;
+            // ppumask
+            case 0x01:
+                val = ppu->get_ppumask();
+                break;
+            // ppustatus
+            case 0x02:
+                val = ppu->get_ppustatus();
+                break;
+            // oamaddr
+            case 0x03:
+                val = ppu->get_oamaddr();
+                break;
+            // oamdata
+            case 0x04:
+                val = ppu->get_oamdata();
+                break;
+            // ppuscroll
+            case 0x05:
+                val = ppu->get_ppuscroll();
+                break;
+            // ppuaddr
+            case 0x06:
+                val = ppu->get_ppuaddr();
+                break;
+            case 0x07:
+                val = ppu->get_ppudata();
+                break;
+            default:
+                throw std::runtime_error("Somehow, low is a value that isn't between 00 and 07");
+            }
+    }
+    else {
+        val = memory[address];
+    }
+
+    return val;
+}
 
 // Base write function from which the mapper writes are called
 void CPU::write(uint16_t address, uint8_t& val) {
@@ -1895,7 +1953,7 @@ void CPU::write(uint16_t address, uint8_t& val) {
                 ppu->set_ppumask(val);
                 break;
             // ppustatus
-            // Read only
+            // Read only - will need to mess with later
             case 0x02:
                 ppu->set_ppustatus(val);
                 break;
@@ -1949,8 +2007,8 @@ void CPU::interrupt_reset() {
     // Set interrupt disable
     //this->SEI();
     // Load address of interrupt handling routine into program counter - in this case the address is stored at $FFFC and $FFFD
-    int8_t low = memory[0xFFFC];
-    int8_t high = memory[0xFFFD];
+    int8_t low = read(0xFFFC);
+    int8_t high = read(0xFFFD);
     int16_t address = absAdd(low, high);
 
     programCounter = address;
@@ -1977,8 +2035,8 @@ void CPU::interrupt_IRQ_generic() {
     SEI();
 
     //Load address of interrupt handling routine from FFFE and FFFF
-    int8_t high = memory[0xFFFF];
-    int8_t low = memory[0xFFFE];
+    int8_t high = read(0xFFFF);
+    int8_t low = read(0xFFFE);
 
     programCounter = absAdd(low, high);
 }
@@ -1998,8 +2056,8 @@ void CPU::interrupt_NMI() {
     SEI();
 
     //Load address of interrupt handling routine from FFFA and FFFB
-    int8_t high = memory[0xFFFB];
-    int8_t low = memory[0xFFFA];
+    int8_t high = read(0xFFFB);
+    int8_t low = read(0xFFFA);
 
     programCounter = absAdd(low, high);
 }
@@ -2046,8 +2104,8 @@ void CPU::set_low_nibble(uint8_t nibble) { low_nibble = nibble; }
 
 uint8_t CPU::get_low_nibble() const { return low_nibble; }
 
-uint8_t CPU::get_next_low_nibble() const { return memory[programCounter + 1]; }
+uint8_t CPU::get_next_low_nibble() const { return read(programCounter + 1); }
 
-uint8_t CPU::get_next_high_nibble() const { return memory[programCounter + 2]; }
+uint8_t CPU::get_next_high_nibble() const { return read(programCounter + 2); }
 
-uint8_t CPU::get_next_opcode() const { return memory[programCounter]; }
+uint8_t CPU::get_next_opcode() const { return read(programCounter); }

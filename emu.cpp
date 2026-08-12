@@ -10,13 +10,14 @@ Emulator::Emulator() {
     running = false;
 
     //Initialize PPU
-    //ppu = PPU()
+    ppu = PPU();
 
     //Initialize APU
     //apu = APU()
 
     //Initialize CPU
     cpu = CPU();
+    cpu.link_ppu(&ppu);
 }
 
 // Emulator::Emulator(const char * filename) {
@@ -702,6 +703,7 @@ void Emulator::nes_test() {
 
     romFile.close();
     good_log.close();
+    test_log.close();
 }
 
 // Helper function for writing log files

@@ -1,10 +1,10 @@
 #include "cpu.h"
-#include "ppu.h"
 
 class Emulator {
 
     private:
         CPU cpu;
+        PPU ppu;
         //PPU ppu;
         //APU apu;
         std::fstream romFile;
