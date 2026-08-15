@@ -79,8 +79,7 @@ constexpr uint8_t cycles[256] = {
 CPU::CPU(int memory_mapper) {
 
     //Initialize memory
-    memory = std::unique_ptr<uint8_t[]>(new uint8_t[65536]);
-    std::fill_n(this->memory.get(), 65536, 0);
+    std::fill_n(memory, 65536, 0);
 
     stackPointer = 0xFF;
     // This value isn't actually correct; the program counter is initialized the value of the reset vector at 0xFFFC and 0xFFFD
@@ -95,8 +94,7 @@ CPU::CPU(int memory_mapper) {
 CPU::CPU() {
 
     //Initialize memory
-    memory = std::unique_ptr<uint8_t[]>(new uint8_t[65536]);
-    std::fill_n(this->memory.get(), 65536, 0);
+    std::fill_n(memory, 65536, 0);
 
     stackPointer = 0xFD;
     programCounter = 0xFFFC;
@@ -112,7 +110,7 @@ CPU::CPU() {
 
 // Used to reset the state of memory and other variables when a new ROM is loaded
 void CPU::manual_reset() {
-    std::fill_n(this->memory.get(), 65536, 0);
+    std::fill_n(memory, 65536, 0);
     stackPointer = 0xFD;
     programCounter = 0xFFFC;
     mem_map = 0;
@@ -1984,6 +1982,17 @@ void CPU::write(uint16_t address, uint8_t& val) {
     // Additional IO Registers
     else if (address <= 0x401F) {
         // 
+        if (ppu == nullptr) {
+            throw std::runtime_error("PPU not linked to CPU");
+        }
+
+        uint8_t low = (address & 0x00FF) % 0x18;
+        switch (low) {
+            // oamdma - writing here triggers a dma (a special memory transfer between cpu and ppu) and may require some additional code
+            case 0x14:
+                ppu->set_oamdma(val);
+                break;
+        }
     }
     // Don't think anything needs to be done here tbh; no mirroring
     else if (address <= 0x7FFF) {

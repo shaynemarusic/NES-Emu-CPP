@@ -166,6 +166,7 @@ void Emulator::run(const char * filename) {
     running = false;
     // Reset components to known state
     cpu.manual_reset();
+    // ppu.manual_reset();
 
     //Load ROM
     //Ripped from my CHIP 8 emulator
@@ -266,11 +267,16 @@ void Emulator::run(const char * filename) {
         }
 
         // Read CHR-ROM
-        // CHR-ROM is used by the PPU to fill the pattern table, hence I will just move on for now
+        // CHR-ROM is used by the PPU to fill the pattern table, some mappers/games handle pattern tables differently and may
+        // need to account for that
         // If CHR ROM is 0, CHR RAM is used
         if (chr_rom != 0) {
             // NEEDS TO BE REPLACED LATER
-            romFile.seekg(8192 * chr_rom, std::ios::cur);
+            for (int i = 0; i < 0x2000; i++) {
+                romFile.read(&byte, 1);
+                ppu.memory[i] = byte;
+            }
+            //romFile.seekg(8192 * chr_rom, std::ios::cur);
         }
 
         // Lastly, there's PlayChoice ROM which is kinda niche, but will deal with anyway

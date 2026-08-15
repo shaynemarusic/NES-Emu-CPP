@@ -193,7 +193,7 @@ class CPU {
         void interrupt_reset();
         void interrupt_IRQ_generic();
         void interrupt_NMI();
-        std::unique_ptr<uint8_t[]> memory;
+        uint8_t memory[65536];
 
         //Setters/getters for cpu variables -- mostly used for testing/debugging
         void set_PC(uint16_t pc);

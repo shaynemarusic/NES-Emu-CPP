@@ -17,15 +17,35 @@ class PPU {
         // 0x2004
         uint8_t oamdata;
         // 0x2005
-        uint8_t ppuscroll;
+        uint16_t ppuscroll;
         // 0x2006
-        uint8_t ppuaddr;
+        uint16_t ppuaddr;
         // 0x2007
         uint8_t ppudata;
         // 0x4014
         uint8_t oamdma;
 
-        // The PPU alaso has 4 internal registers, but I'll get to those later
+        // The PPU alaso has 4 internal registers
+        // This represents the current VRAM address that the PPU is working with. Essentially, the nametable and attribute table 
+        // addresses are calculated using v, and it is updated accordingly. The actual register is only 15 bits
+        uint16_t v;
+        // This is a temporary VRAM address which is copied into v at specific points in execution. It is also 15 bits
+        uint16_t t;
+        // Fine X scroll register. Not sure how this one is used yet. Only 3 bits
+        uint8_t x;
+        // Write latch. Since the CPU can only write one bite to the PPU at a time, this is used to indicate if the byte is the least
+        // significant byte or the most significant byte. This register is shared by ppuaddr and ppuscroll, and can be reset by
+        // having the CPU read from 0x2002
+        bool w;
+
+
+        // Used to track where in the rendering process the PPU is at
+        int scanline;
+        int dot;
+        // Used to track even/odd frames
+        int frame;
+
+        uint8_t frame_buffer[256][240];
 
         // Not sure if this is needed
         int memory_mapper;
@@ -40,9 +60,9 @@ class PPU {
             Pattern Tables: 0000 - 0x1FFF
                 Pattern tables store the 8x8 pixel tiles which can be drawn
                 Many games store pattern tables in CHR-ROM, but those that don't use RAM and fill them during execution
-                Each of the two pattern tables contain one of the least significant bits of a color that is combined with info from
-                an attribute table to determine the color of a given pixel. For example if 0x0000[0] = 1 and 0x0008[0] = 0, then the
-                lower order bits of that associated pixel's color are 0b01
+                Each of the two adjacent tiles in a pattern table contain one of the least significant 
+                bits of a color that is combined with info from an attribute table to determine the color of a given pixel. 
+                For example if 0x0000[0] = 1 and 0x0008[0] = 0, then the lower order bits of that associated pixel's color are 0b01
                 - Pattern Table 1: 0000 - 0x0FFF
                 - Pattern Table 2: 0x1000 - 0x1FFF
             Name Tables: 0x2000 - 0x3EFF
@@ -70,8 +90,10 @@ class PPU {
             Mirrors: 0x4000 - 0x10000
         */
     public:
-        std::unique_ptr<uint8_t[]> memory;
+        uint8_t memory[65536];
         PPU();
+        void tick();
+        void render();
 
         // Setters + Getters
         void set_memory_mapper(int mapper);
@@ -80,14 +102,14 @@ class PPU {
         void set_mirroring(int vert);
         int get_mirroring() const;
 
-        void set_ppuctrl(uint8_t value);
+        void set_ppuctrl(uint16_t value);
         uint8_t get_ppuctrl() const;
 
         void set_ppumask(uint8_t value);
         uint8_t get_ppumask() const;
 
         void set_ppustatus(uint8_t value);
-        uint8_t get_ppustatus() const;
+        uint8_t get_ppustatus();
 
         void set_oamaddr(uint8_t value);
         uint8_t get_oamaddr() const;
@@ -95,11 +117,11 @@ class PPU {
         void set_oamdata(uint8_t value);
         uint8_t get_oamdata() const;
 
-        void set_ppuscroll(uint8_t value);
-        uint8_t get_ppuscroll() const;
+        void set_ppuscroll(uint16_t value);
+        uint16_t get_ppuscroll() const;
 
-        void set_ppuaddr(uint8_t value);
-        uint8_t get_ppuaddr() const;
+        void set_ppuaddr(uint16_t value);
+        uint16_t get_ppuaddr() const;
 
         void set_ppudata(uint8_t value);
         uint8_t get_ppudata() const;
