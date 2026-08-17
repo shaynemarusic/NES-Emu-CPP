@@ -13,7 +13,7 @@ PPU::PPU() {
         std::fill_n(frame_buffer[i], 240, 0);
     }
 
-    // Set registers
+    // Set MMIO registers
     ppuctrl = 0;
     ppumask = 0;
     ppustatus = 0;
@@ -23,11 +23,21 @@ PPU::PPU() {
     ppuaddr = 0;
     ppudata = 0;
     oamdma = 0;
+    
+    // Set internal registers and other variables
+    v = 0;
+    t = 0;
+    w = 0;
+    x = 0;
+    current_nametable_byte = 0;
 
     // Set state variables
     scanline = 261;
     dot = 0;
     frame = 0;
+
+    // Set bus
+    address_bus = 0;
 }
 
 // Setters + Getters
@@ -128,6 +138,7 @@ void PPU::set_ppuaddr(uint16_t value) {
 
 uint16_t PPU::get_ppuaddr() const { return ppuaddr; }
 
+// TODO
 // This causes v to increment depending on the value of ppuctrl and has some other funky effects that I will mess with later
 void PPU::set_ppudata(uint8_t value) { ppudata = value; }
 
@@ -174,3 +185,19 @@ void PPU::tick() {
         scanline += 1;
     }
 }
+
+// Tile fetching related functions
+
+// The nametable address is essentially just v ignoring the 3 most significant bits (Y fine) and or'ed with 0x2000
+void PPU::fetch_nametable_address() { address_bus = 0x2000 | (v & 0xFFF); }
+
+// The attribute address takes the form NN 1111 YYY XXX where N are the nametable select bits of v, 1111 is the attribute offset,
+// and YYY and XXX are the upper 3 bits of the Y coarse and X coarse bits in v (essentially y/4 and x/4)
+void PPU::fetch_attribute_address() { address_bus = 0x23C0 | (v & 0x0C00) | ((v >> 4) & 0x38) | ((v >> 2) | 0x07); }
+
+// The pattern table address take the form 0 H NNNN NNNN P yyy where H determines which table is being fetched from (this comes from
+// PPUCTRL) NNNN NNNN is the nametable tile number, P determines if it's the significant byte or the less significant byte, and yyy
+// is fine y
+void PPU::fetch_patterntable_low_address() { address_bus = (((uint16_t)ppuctrl << 7) & 0x1000) | (((uint16_t)current_nametable_byte << 4) & 0xFF0) | ((v >> 12) & 0x7); }
+
+void PPU::fetch_patterntable_high_address() { address_bus = 8 | (((uint16_t)ppuctrl << 7) & 0x1000) | (((uint16_t)current_nametable_byte << 4) & 0xFF0) | ((v >> 12) & 0x7); }

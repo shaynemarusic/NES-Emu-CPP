@@ -38,6 +38,8 @@ class PPU {
         // having the CPU read from 0x2002
         bool w;
 
+        uint16_t address_bus;
+        uint8_t current_nametable_byte;
 
         // Used to track where in the rendering process the PPU is at
         int scanline;
@@ -89,6 +91,14 @@ class PPU {
                 - Mirrors of 0x3F00 - 0x3F1F: 0x3F20 - 0x3FFF
             Mirrors: 0x4000 - 0x10000
         */
+
+        // Fetching tiles is a 2 cycle process - on the first cycle, the address to fetch from is loaded on to the address bus
+        // On the second cycle, the actual tile is fetched
+        void fetch_nametable_address();
+        void fetch_attribute_address();
+        void fetch_patterntable_low_address();
+        void fetch_patterntable_high_address();
+        uint8_t fetch_tile() const;
     public:
         uint8_t memory[65536];
         PPU();
