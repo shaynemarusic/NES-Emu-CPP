@@ -56,7 +56,7 @@ class PPU {
         // Used to track even/odd frames
         int frame;
 
-        uint8_t frame_buffer[256][240];
+        uint8_t frame_buffer[256][240][3];
 
         // Not sure if this is needed
         int memory_mapper;
@@ -115,6 +115,8 @@ class PPU {
         void increment_fine_y();
 
         void update_pixel();
+
+        void shift_srs();
     public:
         uint8_t memory[65536];
         PPU();
