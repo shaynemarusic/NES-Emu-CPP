@@ -158,7 +158,23 @@ void PPU::tick() {
 
     // These are the visible scanlines - the ppu actually modifies visible pixels in this section
     if (scanline <= 239) {
-
+        // Idle cycle - the address bus is loaded with the address to the low background tile byte
+        if (dot == 0) {
+            fetch_patterntable_low_address();
+        }
+        // Regular execution - a pixel is selected from the shift registers and it is updated in the pixel buffer
+        // At the same time, the PPU is continually fetching data for the next set of 8 pixels
+        else if (dot < 257) {
+            // Check if we need to load shift registers
+            // Every time a nametable byte is fetched with the exception of cycles 1 and 321, the fetched data is loaded into
+            // the appropriate shift register
+            // This also coincides with incrementing coarse x in v
+            if (dot != 1 && dot != 321 && (dot % 8) == 1) {
+                load_shift_registers();
+            }
+            // Fetching
+            fetch();
+        }
     }
     // The post-render scanline - the ppu just idles during this scanline
     else if (scanline == 240) {
@@ -201,3 +217,53 @@ void PPU::fetch_attribute_address() { address_bus = 0x23C0 | (v & 0x0C00) | ((v 
 void PPU::fetch_patterntable_low_address() { address_bus = (((uint16_t)ppuctrl << 7) & 0x1000) | (((uint16_t)current_nametable_byte << 4) & 0xFF0) | ((v >> 12) & 0x7); }
 
 void PPU::fetch_patterntable_high_address() { address_bus = 8 | (((uint16_t)ppuctrl << 7) & 0x1000) | (((uint16_t)current_nametable_byte << 4) & 0xFF0) | ((v >> 12) & 0x7); }
+
+// This oversees fetching for most cycles where the PPU needs to fetch data
+void PPU::fetch() {
+    int dot_mod = dot % 8;
+    switch (dot_mod) {
+        // Fetch the background high byte
+        case 0:
+            current_pattern_high_byte = memory[address_bus];
+            break;
+        // Fetch nametable address
+        case 1:
+            fetch_nametable_address();
+            break;
+        // Fetch nametable byte
+        case 2:
+            current_nametable_byte = memory[address_bus];
+            break;
+        // Fetch attribute address
+        case 3:
+            fetch_attribute_address();
+            break;
+        // Fetch attribute byte
+        case 4:
+            current_attribute_byte = memory[address_bus];
+            break;
+        // Fetch pattern low address
+        case 5:
+            fetch_patterntable_low_address();
+            break;
+        // Fetch pattern low byte
+        case 6:
+            current_pattern_low_byte = memory[address_bus];
+            break;
+        // Fetch pattern high address
+        case 7:
+            fetch_patterntable_high_address();
+            break;
+    }
+}
+
+void PPU::load_shift_registers() {
+
+    // This low bit/latch is selected using the coarse x and y bits from v (speficially bit 1 and bit 5)
+    uint8_t bit_selector = ((1 & (v >> 1)) * 2 + (1 & (v >> 5)) * 4);
+    low_attribute_latch = (current_attribute_byte >> bit_selector) & 1;
+    high_attribute_latch = (current_attribute_byte >> (bit_selector + 1)) & 1;
+    low_pattern_sr = (low_pattern_sr & 0xFF00) | current_pattern_low_byte;
+    high_pattern_sr = (high_pattern_sr & 0xFF00) | current_pattern_high_byte;
+
+}

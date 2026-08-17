@@ -40,6 +40,15 @@ class PPU {
 
         uint16_t address_bus;
         uint8_t current_nametable_byte;
+        uint8_t current_pattern_low_byte;
+        uint8_t current_pattern_high_byte;
+        uint8_t current_attribute_byte;
+        uint16_t high_pattern_sr;
+        uint16_t low_pattern_sr;
+        uint16_t high_attribute_sr;
+        uint16_t low_attribute_sr;
+        uint8_t high_attribute_latch;
+        uint8_t low_attribute_latch;
 
         // Used to track where in the rendering process the PPU is at
         int scanline;
@@ -98,7 +107,8 @@ class PPU {
         void fetch_attribute_address();
         void fetch_patterntable_low_address();
         void fetch_patterntable_high_address();
-        uint8_t fetch_tile() const;
+        void fetch();
+        void load_shift_registers();
     public:
         uint8_t memory[65536];
         PPU();
