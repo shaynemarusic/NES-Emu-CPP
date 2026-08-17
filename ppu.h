@@ -108,7 +108,13 @@ class PPU {
         void fetch_patterntable_low_address();
         void fetch_patterntable_high_address();
         void fetch();
+
         void load_shift_registers();
+
+        void increment_coarse_x();
+        void increment_fine_y();
+
+        void update_pixel();
     public:
         uint8_t memory[65536];
         PPU();

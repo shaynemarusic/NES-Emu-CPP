@@ -165,15 +165,23 @@ void PPU::tick() {
         // Regular execution - a pixel is selected from the shift registers and it is updated in the pixel buffer
         // At the same time, the PPU is continually fetching data for the next set of 8 pixels
         else if (dot < 257) {
+            // "Draw" a pixel (this updates the shift registers as well)
+            update_pixel();
+
+            int dot_mod = dot % 8;
             // Check if we need to load shift registers
             // Every time a nametable byte is fetched with the exception of cycles 1 and 321, the fetched data is loaded into
             // the appropriate shift register
-            // This also coincides with incrementing coarse x in v
-            if (dot != 1 && dot != 321 && (dot % 8) == 1) {
-                load_shift_registers();
-            }
+            if (dot != 1 && dot_mod == 1) load_shift_registers();
+
             // Fetching
             fetch();
+
+            // Check if we need to increment coarse x - this is done every 8 cycles 
+            if (dot_mod == 0) increment_coarse_x();
+
+            // Check if we need to increment fine y - this is done only on cycle 256
+            if (dot == 256) increment_fine_y();
         }
     }
     // The post-render scanline - the ppu just idles during this scanline
@@ -266,4 +274,67 @@ void PPU::load_shift_registers() {
     low_pattern_sr = (low_pattern_sr & 0xFF00) | current_pattern_low_byte;
     high_pattern_sr = (high_pattern_sr & 0xFF00) | current_pattern_high_byte;
 
+}
+
+// Basically ripped straight from the wiki page on scrolling
+// We need to wrap if coarse x overflows - in that case we set coarse x to 0 and switch the horizontal nametable
+void PPU::increment_coarse_x() {
+
+    if ((v & 0x1F) == 31) {
+        v &= ~0x1F;
+        v ^= 0x400; // This toggles the horizontal nametable bit
+    }
+    else v++;
+
+}
+
+// Also ripped from the wiki
+// Increment fine y, overflow to coarse y, and lastly if that overflows, flip the vertical nametable bit like incrementing coarse x
+void PPU::increment_fine_y() {
+
+    // If fine y is less than 7
+    if ((v & 0x7000) != 0x7000) v += 0x1000;
+    else {
+        // Set fine y to 0
+        v &= ~0x7000;
+        uint16_t coarse_y = (v & 0x3E0) >> 5;
+        if (coarse_y == 29) {
+            coarse_y = 0;
+            // Flip vertical nametable bit
+            v ^= 0x800;
+        }
+        // Coarse y can be set out of bounds, which does not cause the nametable to switch - this has some funky effects that some 
+        // games rely on
+        else if (coarse_y == 31) coarse_y = 0;
+        else coarse_y++;
+
+        v = (v & ~0x3E0) | (coarse_y << 5);
+    }
+
+}
+
+// This selects bits from our shift registers and updates the corresponding buffer entry with the new pixel data
+void PPU::update_pixel() {
+
+    // x selects a bit from each shift register to create a 4 bit number
+    uint8_t bit = 15 - x;
+    uint8_t low_pixel_bit = (low_pattern_sr >> bit) & 1;
+    uint8_t high_pixel_bit = (high_pattern_sr >> bit) & 1;
+    uint8_t bg_pixel = (high_pixel_bit << 1) | low_pixel_bit;
+
+    uint8_t low_palette_bit = (low_attribute_sr >> bit) & 1;
+    uint8_t high_palette_bit = (high_attribute_sr >> bit) & 1;
+    uint8_t palette = (high_palette_bit << 1) | low_palette_bit;
+    // palette * 4 + pixel identifies a color in the background palette
+
+    // TODO - will just focus on the background for now
+    // Cross reference with sprite pixel data to determine which gets drawn
+
+    // Once that is done, we are left with a 5 bit number S AA PP where S selects the background or sprite palette, A
+    // is the attribute data (palette number selector), and P is the pattern table data (pixel value)
+    uint8_t drawn_pixel = (palette << 2) | bg_pixel;
+    uint8_t color_index = memory[drawn_pixel | 0x3F00];
+
+    // This byte is used to lookup a color in the system palette. On actual hardware, there is no RGB signal, but here we just store
+    // a table of RGB values that someone else made
 }
