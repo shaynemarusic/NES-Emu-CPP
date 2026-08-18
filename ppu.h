@@ -56,6 +56,7 @@ class PPU {
         // Used to track even/odd frames
         int frame;
 
+        // Pixel information
         uint8_t frame_buffer[256][240][3];
 
         // Not sure if this is needed
@@ -117,8 +118,15 @@ class PPU {
         void update_pixel();
 
         void shift_srs();
+
+        // Return true if certain flags are true
+        bool is_render_enabled();
+        bool is_background_enabled();
+        bool is_sprite_enabled();
     public:
         uint8_t memory[65536];
+        // Used to trigger NMIs
+        bool nmi_trigger;
         PPU();
         void tick();
         void render();

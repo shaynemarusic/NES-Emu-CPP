@@ -157,10 +157,15 @@ void PPU::set_mirroring(int vert) { vertical_mirroring = vert; }
 int PPU::get_mirroring() const { return vertical_mirroring; }
 
 // Modifies t - sets the nametable select bits (bits 10-11) with the 2 least significant bits
+// One special effect is if the vblank nmi flag is flipped from 0 to 1 while ppustatus' vblank flag is set, an NMI will be immediately
+// triggered
 void PPU::set_ppuctrl(uint16_t value) { 
     
+    uint8_t old_nmi = ppuctrl & 0x80;
+    uint8_t new_nmi = value & 0x80;
+    if (old_nmi == 0 && new_nmi != old_nmi) nmi_trigger = true;
     ppuctrl = value;
-    t = (t & 0x73FF) | (value & 0xFC);
+    t = (t & 0x73FF) | ((value & 3) << 10);
 
 }
 
@@ -172,11 +177,13 @@ uint8_t PPU::get_ppumask() const { return ppumask; }
 
 void PPU::set_ppustatus(uint8_t value) { ppustatus = value; }
 
-// This sets w to 0
+// This sets w to 0 and clears the VBlank flag
 uint8_t PPU::get_ppustatus() {
 
     w = false;
-    return ppustatus; 
+    uint8_t current_status = ppustatus;
+    ppustatus &= ~0x80;
+    return current_status; 
 
 }
 
@@ -263,12 +270,15 @@ void PPU::tick() {
     // Defer updating the window until a full pass of the screen has been made
     // We will keep pixel information in a buffer
 
+    // Disarm nmi trigger
+    nmi_trigger = false;
+
     // These are the visible scanlines - the ppu actually modifies visible pixels in this section
     if (scanline <= 239) {
         // Idle cycle - the address bus is loaded with the address to the low background tile byte
-        if (dot == 0) {
-            fetch_patterntable_low_address();
-        }
+        // If the frame is even and rendering is enabled, we skip this cycle
+        if (dot == 0 && is_render_enabled() && frame % 2 == 0) fetch_patterntable_low_address();
+
         // Regular execution - a pixel is selected from the shift registers and it is updated in the pixel buffer
         // At the same time, the PPU is continually fetching data for the next set of 8 pixels
         else if (dot < 257) {
@@ -298,26 +308,20 @@ void PPU::tick() {
 
         }
         // We fetch data for the next scanline and do nothing else
-        else if (dot < 337) {
-            fetch();
-        }
+        else if (dot < 337) fetch();
         // During the last two dots of a scanline the PPU performs two useless nametable fetches. This behavior is used in some games
-        else if (dot % 2 == 1){
-            fetch_nametable_address();
-        }
-        else {
-            current_nametable_byte = memory[address_bus];
-        }
+        else if (dot % 2 == 1 && is_render_enabled()) fetch_nametable_address();
+        else if (is_render_enabled()) current_nametable_byte = memory[address_bus];
     }
     // The post-render scanline - the ppu just idles during this scanline
     else if (scanline == 240) {
-        if (dot == 0) fetch_patterntable_low_address();
+        if (dot == 0 && is_render_enabled()) fetch_patterntable_low_address();
     }
     // This is the beginning of VBlank period - the VBlank is set during the second tick of scanline 241 and an NMI is triggered
     else if (scanline == 241) {
         if (dot == 1) {
-            ppuctrl |= 0x80;
-            // Do stuff to trigger an NMI - TODO
+            ppustatus |= 0x80;
+            nmi_trigger = true;
         }
     }
     // VBlank - the PPU essentially does nothing until it reaches scanline 261
@@ -327,14 +331,62 @@ void PPU::tick() {
     // Scanline 261 - This is the prerender scanline (aka scanline -1). The PPU loads data to prepare for rendering in scanline 0
     // Length of this scanline is dependent on if an even or odd frame is being rendered
     else {
+        // Behaves the same as the visible scanlines except no pixels are actually updated
+        if (dot > 0 && dot < 257) {
+            // Clear VBlank flag, Sprite 0, and Sprite overflow flags in ppustatus
+            if (dot == 1) ppustatus = 0;
 
+            // Shift the shift registers - Note that this occurs regardless of if rendering is enabled or not
+            shift_srs();
+
+            int dot_mod = dot % 8;
+            // Check if we need to load shift registers
+            // Every time a nametable byte is fetched with the exception of cycles 1 and 321, the fetched data is loaded into
+            // the appropriate shift register
+            if (dot != 1 && dot_mod == 1) load_shift_registers();
+
+            // Fetching
+            fetch();
+
+            // Check if we need to increment coarse x - this is done every 8 cycles 
+            if (dot_mod == 0) increment_coarse_x();
+
+            // Check if we need to increment fine y - this is done only on cycle 256
+            if (dot == 256) increment_fine_y();
+        }
+        // TODO
+        else if (dot < 321) {
+            // Copy over the horizontal component of t to the v
+            if (dot == 257 && is_render_enabled()) v = (v & 0x7BE0) | (t & 0x41F);
+            
+            // If rendering is enabled we reload the vertical scroll bits of v
+            if (dot >= 280 && dot < 305 && is_render_enabled()) v = (v & 0x41F) | (t & 0x7BE0);
+
+        }
+        // We fetch data for the next scanline and do nothing else
+        else if (dot < 337) {
+            fetch();
+        }
+        // During the last two dots of a scanline the PPU performs two useless nametable fetches. This behavior is used in some games
+        else if (dot % 2 == 1 && is_render_enabled()){
+            fetch_nametable_address();
+        }
+        else if (is_render_enabled()) {
+            current_nametable_byte = memory[address_bus];
+        }
     }
 
     dot++;
     // Reached the end of a scanline
-    if (dot == 340) {
+    if (dot == 341) {
         dot = 0;
-        scanline += 1;
+        scanline++;
+    }
+
+    // Reached the end of the final scanline
+    if (scanline == 262) {
+        scanline = 0;
+        frame++;
     }
 }
 
@@ -356,6 +408,8 @@ void PPU::fetch_patterntable_high_address() { address_bus = 8 | (((uint16_t)ppuc
 
 // This oversees fetching for most cycles where the PPU needs to fetch data
 void PPU::fetch() {
+    if (!is_render_enabled()) return;
+
     int dot_mod = dot % 8;
     switch (dot_mod) {
         // Fetch the background high byte
@@ -443,6 +497,13 @@ void PPU::increment_fine_y() {
 
 // This selects bits from our shift registers and updates the corresponding buffer entry with the new pixel data
 void PPU::update_pixel() {
+    // If rendering is disabled, we set every pixel to be the background color
+    // There is a slight nuance in that if v is in the 0x3F00 region, we output whatever color its pointing to
+    if (!is_render_enabled()) {
+        // TODO
+        // Do stuff to set the whole frame to the background color
+        return;
+    }
 
     // x selects a bit from each shift register to create a 4 bit number
     uint8_t bit = 15 - x;
@@ -486,3 +547,10 @@ void PPU::shift_srs() {
     high_pattern_sr = (high_pattern_sr << 1) | 1;
 
 }
+
+// Used to check which portions of rendering are enabled
+bool PPU::is_render_enabled(){ return is_background_enabled() || is_sprite_enabled(); }
+
+bool PPU::is_background_enabled() { return ((ppumask >> 1) && 1) == 1; }
+
+bool PPU::is_sprite_enabled() { return ((ppumask >> 2) && 1) == 1; }
