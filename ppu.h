@@ -56,9 +56,6 @@ class PPU {
         // Used to track even/odd frames
         int frame;
 
-        // Pixel information
-        uint8_t frame_buffer[256][240][3];
-
         // Not sure if this is needed
         int memory_mapper;
         // Used to configure nametable mirroring
@@ -125,6 +122,8 @@ class PPU {
         bool is_sprite_enabled();
     public:
         uint8_t memory[65536];
+        // Pixel information
+        uint8_t frame_buffer[256 * 240 * 4];
         // Used to trigger NMIs
         bool nmi_trigger;
         PPU();

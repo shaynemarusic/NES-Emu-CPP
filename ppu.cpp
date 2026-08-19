@@ -1,4 +1,5 @@
 #include "ppu.h"
+#include "./SDL2/include/SDL.h"
 
 // This specifically is the 2C02G palette with emphasized variants from the nes wiki
 constexpr uint8_t sys_palette[512][3] = {
@@ -358,7 +359,7 @@ void PPU::tick() {
         else if (dot < 321) {
             // Copy over the horizontal component of t to the v
             if (dot == 257 && is_render_enabled()) v = (v & 0x7BE0) | (t & 0x41F);
-            
+
             // If rendering is enabled we reload the vertical scroll bits of v
             if (dot >= 280 && dot < 305 && is_render_enabled()) v = (v & 0x41F) | (t & 0x7BE0);
 
@@ -533,9 +534,15 @@ void PPU::update_pixel() {
     uint16_t color_emphasis = (ppumask & 0xE0) << 1;
 
     // Finally we update the frame buffer with the new color info
-    frame_buffer[scanline][dot - 1][0] = sys_palette[color_index | color_emphasis][0];
-    frame_buffer[scanline][dot - 1][1] = sys_palette[color_index | color_emphasis][1];
-    frame_buffer[scanline][dot - 1][2] = sys_palette[color_index | color_emphasis][2];
+    int offset = (scanline * 256 + dot) * 4;
+    // blue
+    frame_buffer[offset] = sys_palette[color_index | color_emphasis][2];
+    // green
+    frame_buffer[offset + 1] = sys_palette[color_index | color_emphasis][1];
+    // red
+    frame_buffer[offset + 2] = sys_palette[color_index | color_emphasis][0];
+    // alpha
+    frame_buffer[offset + 3] = SDL_ALPHA_OPAQUE;
 
 }
 

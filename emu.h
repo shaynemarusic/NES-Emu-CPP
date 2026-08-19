@@ -1,4 +1,5 @@
 #include "cpu.h"
+#include "./SDL2/include/SDL.h"
 
 class Emulator {
 
@@ -16,6 +17,16 @@ class Emulator {
         int flag6;
         int flag7;
         bool running;
+
+        // The CPU runs at 1.79 MHz on NTSC systems - clock speed is in nanoseconds
+        double const clock_speed = 1000000000 / 1790000;
+        double render_speed = 1000 / 60;
+
+        // Used for rendering
+        const int SCREEN_WIDTH = 640, SCREEN_HEIGHT = 320, LOGICAL_WIDTH = 256, LOGICAL_HEIGHT = 240;
+        SDL_Window* window;
+        SDL_Renderer* renderer;
+        SDL_Texture* texture;
     public:
         //Emulator(const char * filename);
         Emulator();

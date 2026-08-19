@@ -3,6 +3,7 @@
 #include <sstream>
 #include <iomanip>
 #include <string>
+#include <chrono>
 
 std::string hex(uint32_t value, int width);
 
@@ -18,6 +19,46 @@ Emulator::Emulator() {
     //Initialize CPU
     cpu = CPU();
     cpu.link_ppu(&ppu);
+
+    // SDL setup
+    if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
+
+        printf("Error initializing SDL: %s\n", SDL_GetError());
+        throw std::runtime_error("");
+
+    }
+
+    window = NULL;
+    renderer = NULL;
+
+    window = SDL_CreateWindow("ShayNES", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, 0);
+
+    if (window == NULL) {
+
+        printf("Error creating SDL window: %s\n", SDL_GetError());
+        throw std::runtime_error("");
+
+    }
+
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+
+    if (renderer == NULL) {
+
+        printf("Error creating SDL renderer: %s\n", SDL_GetError());
+        throw std::runtime_error("");
+
+    }
+
+    SDL_RenderSetLogicalSize(renderer, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+
+    // Create Texture
+    texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+
+    // Display a blank screen
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    SDL_RenderClear(renderer);
+    SDL_RenderPresent(renderer);
+
 }
 
 // Emulator::Emulator(const char * filename) {
@@ -296,8 +337,45 @@ void Emulator::run(const char * filename) {
         running = true;
 
         // Code execution -- need to add timing and some simulation of concurrency, but this should work for testing the CPU
+        long long cycles = 0;
+        int cycle_delta = 0;
+        auto last_time = std::chrono::high_resolution_clock::now();
+
         while (running) {
-            cpu.decode();
+            auto current_time = std::chrono::high_resolution_clock::now();
+            auto diff = std::chrono::duration_cast<std::chrono::duration<double, std::chrono::nanoseconds>>(current_time - last_time).count();
+
+            if (diff > clock_speed * cycle_delta) {
+                double render_diff = diff * 10e-6;
+                // Check to see if we need to update the screen
+                if (render_diff > render_speed) {
+                    uint8_t* locked_pixels = nullptr;
+                    int pitch = 0;
+                    SDL_LockTexture(texture, NULL, reinterpret_cast<void **>(&locked_pixels), &pitch);
+                    std::copy_n(ppu.frame_buffer, LOGICAL_WIDTH * LOGICAL_HEIGHT * 4, locked_pixels);
+                    SDL_UnlockTexture(texture);
+
+                    // Render the new pixel data
+                    SDL_RenderCopy(renderer, texture, nullptr, nullptr);
+                    SDL_RenderPresent(renderer);
+                }
+
+                last_time = current_time;
+
+                cycle_delta = cpu.decode();
+
+                // Check for NMI being triggered
+                if (ppu.nmi_trigger) cpu.interrupt_NMI();
+
+                // Run ppu the necessary number of cycles
+                for (int i = 0; i < cycle_delta; i++) {
+                    ppu.tick();
+                    // Check for NMI
+                    if (ppu.nmi_trigger) cpu.interrupt_NMI();
+                }
+
+                cycles += cycle_delta;
+            }
         }
 
         romFile.close();
