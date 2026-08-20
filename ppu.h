@@ -1,5 +1,6 @@
 #include <cstdint>
 #include <memory>
+#include <unordered_map>
 
 // This class represents the PPU (duh, again). The NES used a 2C02
 class PPU {
@@ -49,6 +50,7 @@ class PPU {
         uint16_t low_attribute_sr;
         uint8_t high_attribute_latch;
         uint8_t low_attribute_latch;
+        uint8_t read_buffer;
 
         // Used to track where in the rendering process the PPU is at
         int scanline;
@@ -120,6 +122,16 @@ class PPU {
         bool is_render_enabled();
         bool is_background_enabled();
         bool is_sprite_enabled();
+
+        // Write functions
+        void default_write(uint16_t address, uint8_t& val);
+
+        // Nametable arrangement is determined by mapper and as such we use a table of function pointers to handle this
+        std::unordered_map<int, void (PPU::*) (uint16_t address, uint8_t& val)> writes = {
+            {0, &PPU::default_write}
+        };
+
+        uint8_t read(uint16_t address);
     public:
         uint8_t memory[65536];
         // Pixel information
@@ -128,7 +140,7 @@ class PPU {
         bool nmi_trigger;
         PPU();
         void tick();
-        void render();
+        void write(uint16_t address, uint8_t val);
 
         // Setters + Getters
         void set_memory_mapper(int mapper);
@@ -159,7 +171,7 @@ class PPU {
         uint16_t get_ppuaddr() const;
 
         void set_ppudata(uint8_t value);
-        uint8_t get_ppudata() const;
+        uint8_t get_ppudata();
 
         void set_oamdma(uint8_t value);
         uint8_t get_oamdma() const;

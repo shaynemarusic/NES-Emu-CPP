@@ -245,6 +245,7 @@ void PPU::set_ppuaddr(uint16_t value) {
         t = (t & 0x7F00) | value;
         // Copy to v - not sure how important the timing of this is, but I'll just assume it's important
         // TODO
+        v = t;
     
     }
     w = !w;
@@ -253,11 +254,46 @@ void PPU::set_ppuaddr(uint16_t value) {
 
 uint16_t PPU::get_ppuaddr() const { return ppuaddr; }
 
-// TODO
 // This causes v to increment depending on the value of ppuctrl and has some other funky effects that I will mess with later
-void PPU::set_ppudata(uint8_t value) { ppudata = value; }
+void PPU::set_ppudata(uint8_t value) {
 
-uint8_t PPU::get_ppudata() const { return ppudata; }
+    write(v, value);
+    // This is a quirk of messing with this register during rendering
+    // If this happens on a dot where an increment to v is supposed to happen anyway, we don't increment twice, but given how niche
+    // that is and how much of a pain it would be to deal with, I don't really care to deal with that
+    if (is_render_enabled() && (scanline == 261 || scanline < 239)) {
+        increment_coarse_x();
+        increment_fine_y();
+    }
+    else {
+        uint8_t increment_amount = ((ppuctrl & 4) >> 2) == 1 ? 32 : 1;
+        v = (v + increment_amount) & 0x7FFF;
+    }
+    ppudata = value;
+
+}
+
+// This also causes v to increment
+// If we read from palette memory we don't have to deal with the read buffer
+uint8_t PPU::get_ppudata() { 
+    
+    if (is_render_enabled() && (scanline == 261 || scanline < 239)) {
+        increment_coarse_x();
+        increment_fine_y();
+    }
+    else {
+        uint8_t increment_amount = ((ppuctrl & 4) >> 2) == 1 ? 32 : 1;
+        v = (v + increment_amount) & 0x7FFF;
+    }
+    // Apply greyscaling
+    if (v >= 0x3F00 && v <= 0x3FFF && (ppumask & 1) == 1) {
+        return read(v) & 0x30;
+    }
+    uint8_t temp = read_buffer;
+    read_buffer = read(v);
+    return temp;
+
+}
 
 void PPU::set_oamdma(uint8_t value) { oamdma = value; }
 
@@ -312,7 +348,7 @@ void PPU::tick() {
         else if (dot < 337) fetch();
         // During the last two dots of a scanline the PPU performs two useless nametable fetches. This behavior is used in some games
         else if (dot % 2 == 1 && is_render_enabled()) fetch_nametable_address();
-        else if (is_render_enabled()) current_nametable_byte = memory[address_bus];
+        else if (is_render_enabled()) current_nametable_byte = read(address_bus);
     }
     // The post-render scanline - the ppu just idles during this scanline
     else if (scanline == 240) {
@@ -373,7 +409,7 @@ void PPU::tick() {
             fetch_nametable_address();
         }
         else if (is_render_enabled()) {
-            current_nametable_byte = memory[address_bus];
+            current_nametable_byte = read(address_bus);
         }
     }
 
@@ -415,7 +451,7 @@ void PPU::fetch() {
     switch (dot_mod) {
         // Fetch the background high byte
         case 0:
-            current_pattern_high_byte = memory[address_bus];
+            current_pattern_high_byte = read(address_bus);
             break;
         // Fetch nametable address
         case 1:
@@ -423,7 +459,7 @@ void PPU::fetch() {
             break;
         // Fetch nametable byte
         case 2:
-            current_nametable_byte = memory[address_bus];
+            current_nametable_byte = read(address_bus);
             break;
         // Fetch attribute address
         case 3:
@@ -431,7 +467,7 @@ void PPU::fetch() {
             break;
         // Fetch attribute byte
         case 4:
-            current_attribute_byte = memory[address_bus];
+            current_attribute_byte = read(address_bus);
             break;
         // Fetch pattern low address
         case 5:
@@ -439,7 +475,7 @@ void PPU::fetch() {
             break;
         // Fetch pattern low byte
         case 6:
-            current_pattern_low_byte = memory[address_bus];
+            current_pattern_low_byte = read(address_bus);
             break;
         // Fetch pattern high address
         case 7:
@@ -523,15 +559,15 @@ void PPU::update_pixel() {
     // Once that is done, we are left with a 5 bit number S AA PP where S selects the background or sprite palette, A
     // is the attribute data (palette number selector), and P is the pattern table data (pixel value)
     uint8_t drawn_pixel = (palette << 2) | bg_pixel;
-    uint16_t color_index = memory[drawn_pixel | 0x3F00];
+    uint16_t color_index = read(drawn_pixel | 0x3F00);
 
     // This byte is used to lookup a color in the system palette. On actual hardware, there is no RGB signal, but here we just store
     // a table of RGB values that someone else made
     // Check the ppumask to determine color emphasis - bit 5 emphasizes red, bit 6 emphsizes green, and bit 7 emphasizes blue, bit 0
     // sets the color to be greyscale
-    if (ppumask & 1 == 1) color_index &= 0x30;
+    if ((ppumask & 1) == 1) color_index &= 0x30;
     // We shift everything over left one so we get a 9 bit address
-    uint16_t color_emphasis = (ppumask & 0xE0) << 1;
+    uint16_t color_emphasis = ((uint16_t) ppumask & 0xE0) << 1;
 
     // Finally we update the frame buffer with the new color info
     int offset = (scanline * 256 + dot) * 4;
@@ -561,3 +597,66 @@ bool PPU::is_render_enabled(){ return is_background_enabled() || is_sprite_enabl
 bool PPU::is_background_enabled() { return ((ppumask >> 1) && 1) == 1; }
 
 bool PPU::is_sprite_enabled() { return ((ppumask >> 2) && 1) == 1; }
+
+// Write functions
+void PPU::write(uint16_t address, uint8_t val) {
+    address &= 0x3FFF;
+    // Pattern table area - no mirroring
+    if (address <= 0x1FFF) {
+        memory[address] = val;
+    }
+    // Nametable/attribute tables. Mirroring depends on mapper in use
+    else if (address <= 0x3EFF) {
+        (this->*writes[memory_mapper])(address, val);
+    }
+    // Palette data
+    else if (address <= 0x3FFF) {
+        // This is a design departure from what I've been doing, but I can't be bothered to think how mirroring works in this region
+        if (address >= 0x3F20) {
+            address &= 0x3F1F;
+        }
+
+        // If we alter the background color
+        if (address % 4 == 0) {
+            for (int i = 0; i < 8; i++) {
+                memory[(address + 4 * i) & 0x1F] = val;
+            }
+        }
+        else {
+            memory[address] = val;
+        }
+    }
+}
+
+// Default memory mapper
+void PPU::default_write(uint16_t address, uint8_t &val) {
+    memory[address] = val;
+    // Nametable 1 (0x2000) and nametable 3 (0x2800) are the same table. Likewise nametable 2 and 4 are the same
+    if (vertical_mirroring) {
+        memory[(address + 0x800) % 0x1000];
+    }
+    // Nametable 1 = nametable 2
+    else {
+        memory[address ^ 0x400] = val;
+    }
+}
+
+// Read function
+uint8_t PPU::read(uint16_t address) {
+    address &= 0x3FFF;
+    // Pattern table area - no mirroring
+    if (address <= 0x3EFF) {
+        if (address >= 0x3000) {
+            address &= ~0x1000;
+        }
+        return memory[address];
+    }
+    // Palette data
+    else if (address <= 0x3FFF) {
+        if (address >= 0x3F20) {
+            address &= 0x3F1F;
+        }
+
+        return memory[address];
+    }
+}
