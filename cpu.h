@@ -190,9 +190,9 @@ class CPU {
         //Destructor may or may not be needed. Depends on implementation details yet to be ironed out
         //~CPU();
         int decode();
-        void interrupt_reset();
-        void interrupt_IRQ_generic();
-        void interrupt_NMI();
+        int interrupt_reset();
+        int interrupt_IRQ_generic();
+        int interrupt_NMI();
         uint8_t memory[65536];
 
         //Setters/getters for cpu variables -- mostly used for testing/debugging

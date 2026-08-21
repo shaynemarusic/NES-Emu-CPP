@@ -12,7 +12,12 @@
                 "cpu.cpp",
                 "ppu.cpp",
                 "-o",
-                "${fileDirname}\\${fileBasenameNoExtension}.exe"
+                "${fileDirname}\\${fileBasenameNoExtension}.exe",
+                "-I",
+                "C:/Users/shayn/NES-Emu/NES-Emu-CPP/SDL2/include",
+                "-L",
+                "C:/Users/shayn/NES-Emu/NES-Emu-CPP/SDL2/lib/x64",
+                "-lSDL2",
             ],
             "options": {
                 "cwd": "${fileDirname}"

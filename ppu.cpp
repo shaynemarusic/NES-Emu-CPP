@@ -118,7 +118,7 @@ PPU::PPU() {
 
     // Initialize frame buffer
     for (int i = 0; i < 256; i++) {
-        std::fill_n(frame_buffer[i], 240, 0);
+        std::fill_n(frame_buffer, 256 * 240 * 4, 0);
     }
 
     // Set MMIO registers
@@ -652,7 +652,7 @@ uint8_t PPU::read(uint16_t address) {
         return memory[address];
     }
     // Palette data
-    else if (address <= 0x3FFF) {
+    else {
         if (address >= 0x3F20) {
             address &= 0x3F1F;
         }

@@ -4,6 +4,7 @@
 #include <iomanip>
 #include <string>
 #include <chrono>
+#include <algorithm>
 
 std::string hex(uint32_t value, int width);
 
@@ -333,17 +334,32 @@ void Emulator::run(const char * filename) {
         // Can now begin execution
 
         // Perform reset interrupt
-        cpu.interrupt_reset();
+        long long cycles = 0;
+        cycles += cpu.interrupt_reset();
         running = true;
 
         // Code execution -- need to add timing and some simulation of concurrency, but this should work for testing the CPU
-        long long cycles = 0;
         int cycle_delta = 0;
         auto last_time = std::chrono::high_resolution_clock::now();
 
         while (running) {
+            //Allows user to close window
+            SDL_Event event;
+            while (SDL_PollEvent(&event)) {
+
+                switch(event.type) {
+
+                    case SDL_QUIT:
+                        running = false;
+                        break;
+        
+                }
+
+            }
+
             auto current_time = std::chrono::high_resolution_clock::now();
-            auto diff = std::chrono::duration_cast<std::chrono::duration<double, std::chrono::nanoseconds>>(current_time - last_time).count();
+            //auto ld = std::chrono::duration<long double>(current_time - last_time);
+            auto diff = std::chrono::duration_cast<std::chrono::duration<double, std::nano>>(current_time - last_time).count();
 
             if (diff > clock_speed * cycle_delta) {
                 double render_diff = diff * 10e-6;
@@ -365,13 +381,13 @@ void Emulator::run(const char * filename) {
                 cycle_delta = cpu.decode();
 
                 // Check for NMI being triggered
-                if (ppu.nmi_trigger) cpu.interrupt_NMI();
+                if (ppu.nmi_trigger) cycle_delta += cpu.interrupt_NMI();
 
                 // Run ppu the necessary number of cycles
                 for (int i = 0; i < cycle_delta; i++) {
                     ppu.tick();
                     // Check for NMI
-                    if (ppu.nmi_trigger) cpu.interrupt_NMI();
+                    if (ppu.nmi_trigger) cycle_delta += cpu.interrupt_NMI();
                 }
 
                 cycles += cycle_delta;
