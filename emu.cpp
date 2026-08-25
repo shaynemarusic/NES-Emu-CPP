@@ -294,7 +294,7 @@ void Emulator::run(const char * filename) {
 
         // Mirror the rom bank
         if (prg_rom == 1) {
-            for (int i = 0; i < 16000; i++) {
+            for (int i = 0; i < 0x4000; i++) {
                 romFile.read(&byte, 1);
                 cpu.memory[0x8000 + i] = byte;
                 cpu.memory[0xC000 + i] = byte;
@@ -302,7 +302,7 @@ void Emulator::run(const char * filename) {
         }
         // Load first two banks into memory otherwise
         else {
-            for (int i = 0; i < 32000; i++) {
+            for (int i = 0; i < 0x8000; i++) {
                 romFile.read(&byte, 1);
                 cpu.memory[0x8000 + i] = byte;
             }
@@ -395,12 +395,18 @@ void Emulator::run(const char * filename) {
         }
 
         romFile.close();
+
     }
     else {
 
         std::cout << "Error: ROM could not be opened. Please make sure the file path is correct." << std::endl;
 
     }
+
+    // Cleanup
+    SDL_DestroyWindow(window);
+    SDL_DestroyRenderer(renderer);
+    SDL_Quit();
 }
 
 // Function that just runs Kevin Horton's nestest in automation mode and creates a log file
@@ -421,7 +427,7 @@ void Emulator::nes_test() {
     char byte;
 
     // Load the test into ROM
-    for (int i = 0; i < 16000; i++) {
+    for (int i = 0; i < 0x4000; i++) {
         romFile.read(&byte, 1);
         cpu.memory[0x8000 + i] = byte;
         cpu.memory[0xC000 + i] = byte;

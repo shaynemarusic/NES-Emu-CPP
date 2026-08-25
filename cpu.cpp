@@ -111,7 +111,7 @@ CPU::CPU() {
 // Used to reset the state of memory and other variables when a new ROM is loaded
 void CPU::manual_reset() {
     std::fill_n(memory, 65536, 0);
-    stackPointer = 0xFD;
+    stackPointer = 0xFF;
     programCounter = 0xFFFC;
     mem_map = 0;
     statusRegister = 36;
@@ -2016,9 +2016,9 @@ int CPU::interrupt_reset() {
     // Set interrupt disable
     //this->SEI();
     // Load address of interrupt handling routine into program counter - in this case the address is stored at $FFFC and $FFFD
-    int8_t low = read(0xFFFC);
-    int8_t high = read(0xFFFD);
-    int16_t address = absAdd(low, high);
+    uint8_t low = read(0xFFFC);
+    uint8_t high = read(0xFFFD);
+    uint16_t address = absAdd(low, high);
     stackPointer -= 3;
 
     programCounter = address;
@@ -2046,8 +2046,8 @@ int CPU::interrupt_IRQ_generic() {
     SEI();
 
     //Load address of interrupt handling routine from FFFE and FFFF
-    int8_t high = read(0xFFFF);
-    int8_t low = read(0xFFFE);
+    uint8_t high = read(0xFFFF);
+    uint8_t low = read(0xFFFE);
 
     programCounter = absAdd(low, high);
     return 7;
@@ -2068,8 +2068,8 @@ int CPU::interrupt_NMI() {
     SEI();
 
     //Load address of interrupt handling routine from FFFA and FFFB
-    int8_t high = read(0xFFFB);
-    int8_t low = read(0xFFFA);
+    uint8_t high = read(0xFFFB);
+    uint8_t low = read(0xFFFA);
 
     programCounter = absAdd(low, high);
     return 7;

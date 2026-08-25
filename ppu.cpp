@@ -570,7 +570,7 @@ void PPU::update_pixel() {
     uint16_t color_emphasis = ((uint16_t) ppumask & 0xE0) << 1;
 
     // Finally we update the frame buffer with the new color info
-    int offset = (scanline * 256 + dot) * 4;
+    int offset = (scanline * 256 + dot - 1) * 4;
     // blue
     frame_buffer[offset] = sys_palette[color_index | color_emphasis][2];
     // green
@@ -594,9 +594,9 @@ void PPU::shift_srs() {
 // Used to check which portions of rendering are enabled
 bool PPU::is_render_enabled(){ return is_background_enabled() || is_sprite_enabled(); }
 
-bool PPU::is_background_enabled() { return ((ppumask >> 1) && 1) == 1; }
+bool PPU::is_background_enabled() { return ((ppumask >> 3) && 1) == 1; }
 
-bool PPU::is_sprite_enabled() { return ((ppumask >> 2) && 1) == 1; }
+bool PPU::is_sprite_enabled() { return ((ppumask >> 4) && 1) == 1; }
 
 // Write functions
 void PPU::write(uint16_t address, uint8_t val) {
