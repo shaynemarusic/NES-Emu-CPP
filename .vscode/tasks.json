@@ -6,6 +6,8 @@
             "command": "C:\\MinGW\\mingw64\\bin\\g++.exe",
             "args": [
                 "-fdiagnostics-color=always",
+                "-I./SDL2/include/",
+                "-L./SDL2/lib/x64/",
                 "-g",
                 "${file}",
                 "emu.cpp",
@@ -13,11 +15,8 @@
                 "ppu.cpp",
                 "-o",
                 "${fileDirname}\\${fileBasenameNoExtension}.exe",
-                "-I",
-                "C:/Users/shayn/NES-Emu/NES-Emu-CPP/SDL2/include",
-                "-L",
-                "C:/Users/shayn/NES-Emu/NES-Emu-CPP/SDL2/lib/x64",
-                "-lSDL2",
+                "-lmingw32",
+                "./SDL2/lib/x64/SDL2.dll"
             ],
             "options": {
                 "cwd": "${fileDirname}"

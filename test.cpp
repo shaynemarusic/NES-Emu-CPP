@@ -1,5 +1,7 @@
 #include "./SDL2/include/SDL.h"
 
+#undef main
+
 int main() {
     SDL_Init(SDL_INIT_VIDEO);
     SDL_Quit();

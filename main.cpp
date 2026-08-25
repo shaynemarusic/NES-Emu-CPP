@@ -1,5 +1,7 @@
 #include "emu.h"
 
+#undef main
+
 int main(int argc, char *argv [] ) {
     Emulator emu = Emulator();
     //emu.nes_test();
