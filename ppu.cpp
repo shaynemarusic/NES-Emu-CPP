@@ -140,7 +140,7 @@ PPU::PPU() {
     current_nametable_byte = 0;
 
     // Set state variables
-    scanline = 261;
+    scanline = 0;
     dot = 0;
     frame = 0;
 
@@ -298,6 +298,15 @@ uint8_t PPU::get_ppudata() {
 void PPU::set_oamdma(uint8_t value) { oamdma = value; }
 
 uint8_t PPU::get_oamdma() const { return oamdma; }
+
+// Logging getters
+uint8_t PPU::log_ppudata() const { return ppudata; }
+
+uint8_t PPU::log_ppustatus() const { return ppustatus; }
+
+int PPU::get_scanline() const { return scanline; }
+
+int PPU::get_dot() const { return dot; }
 
 // Execution related functions
 
@@ -571,12 +580,12 @@ void PPU::update_pixel() {
 
     // Finally we update the frame buffer with the new color info
     int offset = (scanline * 256 + dot - 1) * 4;
-    // blue
-    frame_buffer[offset] = sys_palette[color_index | color_emphasis][2];
+    // red
+    frame_buffer[offset] = sys_palette[color_index | color_emphasis][0];
     // green
     frame_buffer[offset + 1] = sys_palette[color_index | color_emphasis][1];
-    // red
-    frame_buffer[offset + 2] = sys_palette[color_index | color_emphasis][0];
+    // blue
+    frame_buffer[offset + 2] = sys_palette[color_index | color_emphasis][2];
     // alpha
     frame_buffer[offset + 3] = SDL_ALPHA_OPAQUE;
 

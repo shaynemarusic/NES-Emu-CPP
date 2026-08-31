@@ -175,4 +175,11 @@ class PPU {
 
         void set_oamdma(uint8_t value);
         uint8_t get_oamdma() const;
+
+        // These are getters used by the emulator for logging purpose - the other getters are destructive
+        uint8_t log_ppudata() const;
+        uint8_t log_ppustatus() const;
+
+        int get_scanline() const;
+        int get_dot() const;
 };
