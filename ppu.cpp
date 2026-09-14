@@ -124,7 +124,7 @@ PPU::PPU() {
     // Set MMIO registers
     ppuctrl = 0;
     ppumask = 0;
-    ppustatus = 0;
+    ppustatus = 0xFF;
     oamaddr = 0;
     oamdata = 0;
     ppuscroll = 0;

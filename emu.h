@@ -37,6 +37,7 @@ class Emulator {
         void nes_test();
         void run(const char * filename);
         void run_log(const char * filename);
+        void blargg();
 };
 
 // A bunch of useful tables

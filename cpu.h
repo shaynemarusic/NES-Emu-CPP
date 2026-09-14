@@ -118,7 +118,7 @@ class CPU {
         void default_write(uint16_t address, uint8_t& val);
 
         std::unordered_map<int, void (CPU::*) (uint16_t address, uint8_t& val)> writes = {
-            {0, &CPU::default_write}
+            {0, &CPU::default_write}, {1, &CPU::default_write}
         };
 
         void write(uint16_t address, uint8_t& val);

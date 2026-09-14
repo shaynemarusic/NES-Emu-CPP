@@ -618,6 +618,41 @@ void Emulator::nes_test() {
     test_log.close();
 }
 
+void Emulator::blargg() {
+    running = true;
+    cpu.manual_reset();
+
+    read_file("official_only.nes");
+    //cpu.memory[0x6000] = 0x80;
+
+    cpu.interrupt_reset();
+    int test = cpu.memory[0x6000];
+    std::cout << test;
+    int ops = 0;
+
+    while (running) {
+        // if (ops == 1031) {
+        //     ops++;
+        //     ops--;
+        // }
+        cpu.decode();
+        //ops += 1;
+        //std::cout << ops << std::endl;
+        //std::cout << int(cpu.memory[0x6000]) << std::endl;
+        if (cpu.memory[0x6000] < 80 && cpu.memory[0x6000] != 0) {
+            running = false;
+        }
+    }
+    test = cpu.memory[0x6000];
+    int i = 0;
+    std::string out = "";
+    while (cpu.memory[0x6000 + i] != 0) {
+        out += char(cpu.memory[0x6000 + i]);
+    }
+    std::cout << out << std::endl;
+    emulator_cleanup();
+}
+
 // Helper function for writing log files
 std::string hex(uint32_t value, int width)
 {

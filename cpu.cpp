@@ -2,6 +2,7 @@
 #include <unordered_map>
 #include <stdexcept>
 #include <string>
+#include <iostream>
 
 // Table of all official instruction sizes
 constexpr uint8_t pcIncrement[256] = {
@@ -1101,7 +1102,8 @@ int CPU::decode() {
             break;
         default:
             //Throw an exception - ADD LATER
-            throw std::invalid_argument("Error: Invalid opcode " + std::to_string(opcode) + " decoded");
+            //throw std::invalid_argument("Error: Invalid opcode " + std::to_string(opcode) + " decoded");
+            std::cout << "Error: Invalid opcode " + std::to_string(opcode) + " decoded" << std::endl;
     }
 
     return cyc_cnt;
@@ -1871,7 +1873,8 @@ uint8_t CPU::read(uint16_t address) const {
     uint8_t val;
     if (address > 0x1FFF && address <= 0x4000) {
         if (ppu == nullptr) {
-            throw std::runtime_error("PPU not linked to CPU");
+            //throw std::runtime_error("PPU not linked to CPU");
+            std::cout << "PPU not linked to CPU" << std::endl;
         }
 
         uint8_t low = (address & 0x00FF) % 8;
@@ -1910,7 +1913,8 @@ uint8_t CPU::read(uint16_t address) const {
                 val = ppu->get_ppudata();
                 break;
             default:
-                throw std::runtime_error("Somehow, low is a value that isn't between 00 and 07");
+                //throw std::runtime_error("Somehow, low is a value that isn't between 00 and 07");
+                std::cout << "Somehow, low is a value that isn't between 00 and 07" << std::endl;
             }
     }
     else {
@@ -1937,7 +1941,8 @@ void CPU::write(uint16_t address, uint8_t& val) {
     // PPU IO Registers - these are mirrored every 8 bytes in this region
     else if (address <= 0x4000) {
         if (ppu == nullptr) {
-            throw std::runtime_error("PPU not linked to CPU");
+            //throw std::runtime_error("PPU not linked to CPU");
+            std::cout << "PPU not linked to CPU" << std::endl;
         }
 
         uint8_t low = (address & 0x00FF) % 8;
@@ -1975,7 +1980,8 @@ void CPU::write(uint16_t address, uint8_t& val) {
                 ppu->set_ppudata(val);
                 break;
             default:
-                throw std::runtime_error("Somehow, low is a value that isn't between 00 and 07");
+                //throw std::runtime_error("Somehow, low is a value that isn't between 00 and 07");
+                std::cout << "Somehow, low is a value that isn't between 00 and 07" << std::endl;
 
         }
     }
@@ -1983,7 +1989,8 @@ void CPU::write(uint16_t address, uint8_t& val) {
     else if (address <= 0x401F) {
         // 
         if (ppu == nullptr) {
-            throw std::runtime_error("PPU not linked to CPU");
+            //throw std::runtime_error("PPU not linked to CPU");
+            std::cout << "PPU not linked to CPU" << std::endl;
         }
 
         uint8_t low = (address & 0x00FF) % 0x18;
@@ -2000,7 +2007,12 @@ void CPU::write(uint16_t address, uint8_t& val) {
     }
     // Writing to ROM. Do memory mapper stuff
     else {
-        (this->*writes[mem_map])(address, val);
+        try {
+            (this->*writes[mem_map])(address, val);
+        }
+        catch (...) {
+            std::cout << "Error" << std::endl;
+        }
     }
 }
 

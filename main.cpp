@@ -5,6 +5,7 @@
 int main(int argc, char *argv [] ) {
     Emulator emu = Emulator();
     //emu.nes_test();
-    emu.run_log("Donkey Kong (World) (Rev A).nes");
+    //emu.run("Donkey Kong (World) (Rev A).nes");
+    emu.blargg();
     return 0;
 }
