@@ -36,8 +36,19 @@ class Emulator {
         Emulator();
         void nes_test();
         void run(const char * filename);
-        void run_log(const char * filename);
+        void run_log(const char * filename, std::vector<Log_Settings> settings);
         void blargg();
+};
+
+enum class Log_Settings {
+    ACCUMULATOR,
+    X_REG,
+    Y_REG,
+    STATUS,
+    STACK_POINTER,
+    SCANLINE,
+    DOT,
+    CYCLE
 };
 
 // A bunch of useful tables

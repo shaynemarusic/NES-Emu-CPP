@@ -268,7 +268,7 @@ void Emulator::run(const char * filename) {
 }
 
 // Runs the file and creates a log file containing info on instructions executed and the status of CPU and PPU registers
-void Emulator::run_log(const char * filename) {
+void Emulator::run_log(const char * filename, std::vector<Log_Settings> settings) {
     running = false;
     // Reset components to known state
     cpu.manual_reset();
@@ -278,6 +278,37 @@ void Emulator::run_log(const char * filename) {
     std::string fn(filename);
     std::ofstream test_log = std::ofstream(fn.substr(0, fn.length() - 4) + " Output Log.txt");
     // Can now begin execution
+
+    // Gather log setting info
+    int setting_mask = 0;
+    for (int i = 0; i < settings.size(); i++) {
+        switch (settings[i]) {
+            case Log_Settings::ACCUMULATOR:
+                setting_mask |= 1;
+                break;
+            case Log_Settings::X_REG:
+                setting_mask |= 2;
+                break;
+            case Log_Settings::Y_REG:
+                setting_mask |= 4;
+                break;
+            case Log_Settings::STATUS:
+                setting_mask |= 8;
+                break;
+            case Log_Settings::STACK_POINTER:
+                setting_mask |= 16;
+                break;
+            case Log_Settings::SCANLINE:
+                setting_mask |= 32;
+                break;
+            case Log_Settings::DOT:
+                setting_mask |= 64;
+                break;
+            case Log_Settings::CYCLE:
+                setting_mask |= 128;
+                break;
+        }
+    }
 
     std::string pc, acc, hi, low, sp, p, x, y, op, ppux, ppuy;
 
@@ -381,38 +412,38 @@ void Emulator::run_log(const char * filename) {
                     break;
                 case AddressingMode::ZPX:
                     exp = (cpu.get_next_low_nibble() + cpu.get_x()) & 0xFF;
-                    test_log << " $" << low << ",X @ " << hex(exp, 2) << " = " << hex(cpu.memory[exp], 2) << std::setw(15);
+                    test_log << " $" << low << ",X @ " << hex(exp, 2) << " = " << hex(cpu.read(exp), 2) << std::setw(15);
                     break;
                 case AddressingMode::ZPY:
                     exp = (cpu.get_next_low_nibble() + cpu.get_y()) & 0xFF;
-                    test_log << " $" << low << ",Y @ " << hex(exp, 2) << " = " << hex(cpu.memory[exp], 2) << std::setw(15);
+                    test_log << " $" << low << ",Y @ " << hex(exp, 2) << " = " << hex(cpu.read(exp), 2) << std::setw(15);
                     break;
                 case AddressingMode::JSR:
                     test_log << " $" << hi << low << std::setw(25);
                     break;
                 case AddressingMode::ABSX:
                     exp = ((((uint16_t) cpu.get_next_high_nibble()) << 8) | cpu.get_next_low_nibble()) + cpu.get_x();
-                    test_log << " $" << hi << low << ",X @ " << hex(exp, 4) << " = " << hex(cpu.memory[exp], 2) << std::setw(11);
+                    test_log << " $" << hi << low << ",X @ " << hex(exp, 4) << " = " << hex(cpu.read(exp), 2) << std::setw(11);
                     break;
                 case AddressingMode::ABSY:
                     exp = ((((uint16_t) cpu.get_next_high_nibble()) << 8) | cpu.get_next_low_nibble()) + cpu.get_y();
-                    test_log << " $" << hi << low << ",Y @ " << hex(exp, 4) << " = " << hex(cpu.memory[exp], 2) << std::setw(11);
+                    test_log << " $" << hi << low << ",Y @ " << hex(exp, 4) << " = " << hex(cpu.read(exp), 2) << std::setw(11);
                     break;
                 case AddressingMode::IND: 
                     exp_low = ((uint16_t) cpu.get_next_high_nibble() << 8) | cpu.get_next_low_nibble();
                     exp_high = ((uint16_t) cpu.get_next_high_nibble() << 8) | ((cpu.get_next_low_nibble() + 1) & 0xFF);
-                    exp = ((uint16_t) cpu.memory[exp_high] << 8) | (uint16_t)cpu.memory[exp_low];
+                    exp = ((uint16_t) cpu.read(exp_high) << 8) | (uint16_t)cpu.read(exp_low);
                     test_log << " ($" << hi << low << ") = " << hex(exp, 4) << std::setw(16);
                     break;
                 case AddressingMode::INDX:
                     exp = (cpu.get_next_low_nibble() + cpu.get_x()) & 0xFF;
-                    ind_add = ((uint16_t) cpu.memory[(exp + 1) & 0xFF] << 8) | cpu.memory[exp];
-                    test_log << " ($" << low << ",X) @ " << hex(exp, 2) << " = " << hex(ind_add, 4) << " = " << hex(cpu.memory[ind_add], 2) << std::setw(6);
+                    ind_add = ((uint16_t) cpu.read((exp + 1) & 0xFF) << 8) | cpu.read(exp);
+                    test_log << " ($" << low << ",X) @ " << hex(exp, 2) << " = " << hex(ind_add, 4) << " = " << hex(cpu.read(ind_add), 2) << std::setw(6);
                     break;
                 case AddressingMode::INDY:
-                    exp = (((uint16_t) cpu.memory[(cpu.get_next_low_nibble() + 1) & 0xFF] << 8) | cpu.memory[cpu.get_next_low_nibble()]);
+                    exp = (((uint16_t) cpu.read((cpu.get_next_low_nibble() + 1) & 0xFF) << 8) | cpu.read(cpu.get_next_low_nibble()));
                     ind_add = exp + cpu.get_y();
-                    test_log << " ($" << low << "),Y = " << hex(exp, 4) << " @ " << hex(ind_add, 4) << " = " << hex(cpu.memory[ind_add], 2) << std::setw(4);
+                    test_log << " ($" << low << "),Y = " << hex(exp, 4) << " @ " << hex(ind_add, 4) << " = " << hex(cpu.read(ind_add), 2) << std::setw(4);
                     break;
                 case AddressingMode::REL:
                     exp = pcint + (int8_t)cpu.get_next_low_nibble() + 2;
@@ -420,7 +451,7 @@ void Emulator::run_log(const char * filename) {
                     break;
                 case AddressingMode::ABS:
                     exp = ((uint16_t) cpu.get_next_high_nibble() << 8) | cpu.get_next_low_nibble();
-                    test_log << " $" << hi << low << " = " << hex(cpu.memory[exp], 2) << std::setw(20);
+                    test_log << " $" << hi << low << " = " << hex(cpu.read(exp), 2) << std::setw(20);
                     break;
             }
 
@@ -437,6 +468,9 @@ void Emulator::run_log(const char * filename) {
             }
 
             // Write state of registers
+            if ((setting_mask & 1) == 1) {
+                test_log << "A:" << acc << " ";
+            }
             test_log << "A:"
                      << acc 
                      << " X:" 
@@ -456,7 +490,7 @@ void Emulator::run_log(const char * filename) {
                      << std::endl;
 
             cycles += cycle_delta;
-            if (lines >= 8991) {
+            if (lines >= 10000) {
                 running = false;
             }
         }
@@ -622,7 +656,7 @@ void Emulator::blargg() {
     running = true;
     cpu.manual_reset();
 
-    read_file("official_only.nes");
+    read_file("01-basics.nes");
     //cpu.memory[0x6000] = 0x80;
 
     cpu.interrupt_reset();
@@ -635,6 +669,19 @@ void Emulator::blargg() {
         //     ops++;
         //     ops--;
         // }
+        SDL_Event event;
+        while (SDL_PollEvent(&event)) {
+
+            switch(event.type) {
+
+                case SDL_QUIT:
+                    running = false;
+                    break;
+    
+            }
+
+        }
+
         cpu.decode();
         //ops += 1;
         //std::cout << ops << std::endl;

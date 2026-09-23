@@ -1999,6 +1999,8 @@ void CPU::write(uint16_t address, uint8_t& val) {
             case 0x14:
                 ppu->set_oamdma(val);
                 break;
+            case 0x15:
+                memory[address] = val;
         }
     }
     // Don't think anything needs to be done here tbh; no mirroring

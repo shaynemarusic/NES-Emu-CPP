@@ -122,7 +122,6 @@ class CPU {
         };
 
         void write(uint16_t address, uint8_t& val);
-        uint8_t read(uint16_t address) const;
 
         //Transfer Instructions
         void TAX();
@@ -194,6 +193,7 @@ class CPU {
         int interrupt_IRQ_generic();
         int interrupt_NMI();
         uint8_t memory[65536];
+        uint8_t read(uint16_t address) const;
 
         //Setters/getters for cpu variables -- mostly used for testing/debugging
         void set_PC(uint16_t pc);
