@@ -70,5 +70,6 @@
         "xlocmon": "cpp",
         "xloctime": "cpp",
         "xtree": "cpp"
-    }
+    },
+    "diffEditor.ignoreTrimWhitespace": true
 }

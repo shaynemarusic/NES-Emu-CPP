@@ -368,23 +368,31 @@ void Emulator::run_log(const char * filename, std::unordered_set<Log_Settings> s
             low = hex(cpu.get_next_low_nibble(), 2);
 
             // Write to log file
-            test_log << pc << std::setw(4);
+            
             // Next part is opcode dependent
-            test_log << op;
             int op_int = cpu.get_next_opcode();
-            if (pcIncrement[op_int] == 1) {
-                test_log << std::setw(11);
+            if (settings.find(Log_Settings::OP_CODE) != settings.end()) {
+                test_log << pc << std::setw(4);
+                test_log << op;
+
+                if (pcIncrement[op_int] == 1) {
+                    test_log << std::setw(11);
+                }
+                else if (pcIncrement[op_int] == 2) {
+                    test_log << " " << low << std::setw(8);
+                }
+                else if (pcIncrement[op_int] == 3) {
+                    test_log << " " << low << " " << hi << std::setw(5);
+                }
+
+                if (unofficialOpcode[op_int]) {
+                    
+                }
             }
-            else if (pcIncrement[op_int] == 2) {
-                test_log << " " << low << std::setw(8);
-            }
-            else if (pcIncrement[op_int] == 3) {
-                test_log << " " << low << " " << hi << std::setw(5);
+            else {
+                test_log << pc << std::setw(5);
             }
 
-            if (unofficialOpcode[op_int]) {
-                
-            }
             test_log << opcodeName[op_int];
             AddressingMode mode = opcodeMode[op_int];
             uint16_t exp, ind_add, exp_low, exp_high;

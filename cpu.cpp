@@ -82,7 +82,7 @@ CPU::CPU(int memory_mapper) {
     //Initialize memory
     std::fill_n(memory, 65536, 0);
 
-    stackPointer = 0;
+    stackPointer = 0xff;
     // This value isn't actually correct; the program counter is initialized the value of the reset vector at 0xFFFC and 0xFFFD
     programCounter = 0xFFFC;
 
@@ -112,7 +112,7 @@ CPU::CPU() {
 // Used to reset the state of memory and other variables when a new ROM is loaded
 void CPU::manual_reset() {
     std::fill_n(memory, 65536, 0);
-    stackPointer = 0;
+    stackPointer = 0xff;
     programCounter = 0xFFFC;
     mem_map = 0;
     statusRegister = 36;

@@ -10,7 +10,8 @@ enum class Log_Settings {
     STACK_POINTER,
     SCANLINE,
     DOT,
-    CYCLE
+    CYCLE,
+    OP_CODE
 };
 
 class Emulator {
