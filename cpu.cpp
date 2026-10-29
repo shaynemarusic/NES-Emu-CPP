@@ -82,7 +82,7 @@ CPU::CPU(int memory_mapper) {
     //Initialize memory
     std::fill_n(memory, 65536, 0);
 
-    stackPointer = 0xff;
+    stackPointer = 0x00;
     // This value isn't actually correct; the program counter is initialized the value of the reset vector at 0xFFFC and 0xFFFD
     programCounter = 0xFFFC;
 
@@ -112,7 +112,7 @@ CPU::CPU() {
 // Used to reset the state of memory and other variables when a new ROM is loaded
 void CPU::manual_reset() {
     std::fill_n(memory, 65536, 0);
-    stackPointer = 0xff;
+    stackPointer = 0x00;
     programCounter = 0xFFFC;
     mem_map = 0;
     statusRegister = 36;
@@ -1241,7 +1241,8 @@ void CPU::EOR(uint8_t operand) {
 //Sets the sign and overflow flags equal to the 7th and 6th bits of the operand resp. (using a 0 based index)
 //Sets the zero flag if the bitwise AND of the operand and the accumulator is 0 (the result of the AND is not stored anywhere)
 void CPU::BIT(uint8_t operand) { 
-    statusRegister = (operand & 0xC0) | ((accumulator & operand) == 0 ? 0x2 : 0) | (statusRegister & 0x3D); }
+    statusRegister = (operand & 0xC0) | ((accumulator & operand) == 0 ? 0x2 : 0) | (statusRegister & 0x3D);
+}
 
 //Shift Instructions
 
@@ -1868,7 +1869,6 @@ void CPU::SBX(uint8_t operand) {
 
 
 //Mapper Read/Write function implementations
-
 uint8_t CPU::read(uint16_t address) const {
     uint8_t val;
     if (address > 0x1FFF && address <= 0x4000) {
@@ -1919,6 +1919,23 @@ uint8_t CPU::read(uint16_t address) const {
     }
     else {
         val = memory[address];
+    }
+
+    return val;
+}
+
+// A special reading function only to be used by logging functions. Reading from certain registers affects the data stored in them
+// This function ignores that behavior and just reads the content
+uint8_t CPU::safe_read(uint16_t address) const {
+    uint8_t val;
+    if (address == 0x2002) {
+        val = ppu->log_ppustatus();
+    }
+    else if (address == 0x2007) {
+        val = ppu->log_ppudata();
+    }
+    else {
+        val = read(address);
     }
 
     return val;

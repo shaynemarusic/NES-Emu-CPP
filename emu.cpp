@@ -407,42 +407,42 @@ void Emulator::run_log(const char * filename, std::unordered_set<Log_Settings> s
                     test_log << " #$" << low << std::setw(28);
                     break;
                 case AddressingMode::ZP:
-                    test_log << " $" << low << " = " << hex(cpu.memory[cpu.get_next_low_nibble()], 2) << std::setw(24);
+                    test_log << " $" << low << " = $" << hex(cpu.memory[cpu.get_next_low_nibble()], 2) << std::setw(24);
                     break;
                 case AddressingMode::ZPX:
                     exp = (cpu.get_next_low_nibble() + cpu.get_x()) & 0xFF;
-                    test_log << " $" << low << ",X @ " << hex(exp, 2) << " = " << hex(cpu.read(exp), 2) << std::setw(17);
+                    test_log << " $" << low << ",X [$00" << hex(exp, 2) << "] = $" << hex(cpu.safe_read(exp), 2) << std::setw(17);
                     break;
                 case AddressingMode::ZPY:
                     exp = (cpu.get_next_low_nibble() + cpu.get_y()) & 0xFF;
-                    test_log << " $" << low << ",Y @ " << hex(exp, 2) << " = " << hex(cpu.read(exp), 2) << std::setw(17);
+                    test_log << " $" << low << ",Y @ " << hex(exp, 2) << " = $" << hex(cpu.safe_read(exp), 2) << std::setw(17);
                     break;
                 case AddressingMode::JSR:
                     test_log << " $" << hi << low << std::setw(27);
                     break;
                 case AddressingMode::ABSX:
                     exp = ((((uint16_t) cpu.get_next_high_nibble()) << 8) | cpu.get_next_low_nibble()) + cpu.get_x();
-                    test_log << " $" << hi << low << ",X @ " << hex(exp, 4) << " = " << hex(cpu.read(exp), 2) << std::setw(13);
+                    test_log << " $" << hi << low << ",X [$" << hex(exp, 4) << "] = $" << hex(cpu.safe_read(exp), 2) << std::setw(13);
                     break;
                 case AddressingMode::ABSY:
                     exp = ((((uint16_t) cpu.get_next_high_nibble()) << 8) | cpu.get_next_low_nibble()) + cpu.get_y();
-                    test_log << " $" << hi << low << ",Y @ " << hex(exp, 4) << " = " << hex(cpu.read(exp), 2) << std::setw(13);
+                    test_log << " $" << hi << low << ",Y [$" << hex(exp, 4) << "] = $" << hex(cpu.safe_read(exp), 2) << std::setw(13);
                     break;
                 case AddressingMode::IND: 
                     exp_low = ((uint16_t) cpu.get_next_high_nibble() << 8) | cpu.get_next_low_nibble();
                     exp_high = ((uint16_t) cpu.get_next_high_nibble() << 8) | ((cpu.get_next_low_nibble() + 1) & 0xFF);
-                    exp = ((uint16_t) cpu.read(exp_high) << 8) | (uint16_t)cpu.read(exp_low);
-                    test_log << " ($" << hi << low << ") = " << hex(exp, 4) << std::setw(18);
+                    exp = ((uint16_t) cpu.safe_read(exp_high) << 8) | (uint16_t)cpu.safe_read(exp_low);
+                    test_log << " ($" << hi << low << ") = $" << hex(exp, 4) << std::setw(18);
                     break;
                 case AddressingMode::INDX:
                     exp = (cpu.get_next_low_nibble() + cpu.get_x()) & 0xFF;
-                    ind_add = ((uint16_t) cpu.read((exp + 1) & 0xFF) << 8) | cpu.read(exp);
-                    test_log << " ($" << low << ",X) @ " << hex(exp, 2) << " = " << hex(ind_add, 4) << " = " << hex(cpu.read(ind_add), 2) << std::setw(8);
+                    ind_add = ((uint16_t) cpu.safe_read((exp + 1) & 0xFF) << 8) | cpu.safe_read(exp);
+                    test_log << " ($" << low << ",X) [$" << hex(exp, 2) << "] = " << hex(ind_add, 4) << " = $" << hex(cpu.safe_read(ind_add), 2) << std::setw(8);
                     break;
                 case AddressingMode::INDY:
-                    exp = (((uint16_t) cpu.read((cpu.get_next_low_nibble() + 1) & 0xFF) << 8) | cpu.read(cpu.get_next_low_nibble()));
+                    exp = (((uint16_t) cpu.safe_read((cpu.get_next_low_nibble() + 1) & 0xFF) << 8) | cpu.safe_read(cpu.get_next_low_nibble()));
                     ind_add = exp + cpu.get_y();
-                    test_log << " ($" << low << "),Y = " << hex(exp, 4) << " @ " << hex(ind_add, 4) << " = " << hex(cpu.read(ind_add), 2) << std::setw(6);
+                    test_log << " ($" << low << "),Y [$" << hex(ind_add, 4) << "] = $" << hex(cpu.safe_read(ind_add), 2) << std::setw(6);
                     break;
                 case AddressingMode::REL:
                     exp = pcint + (int8_t)cpu.get_next_low_nibble() + 2;
@@ -450,7 +450,7 @@ void Emulator::run_log(const char * filename, std::unordered_set<Log_Settings> s
                     break;
                 case AddressingMode::ABS:
                     exp = ((uint16_t) cpu.get_next_high_nibble() << 8) | cpu.get_next_low_nibble();
-                    test_log << " $" << hi << low << " = " << hex(cpu.read(exp), 2) << std::setw(22);
+                    test_log << " $" << hi << low << " = $" << hex(cpu.safe_read(exp), 2) << std::setw(22);
                     break;
             }
 

@@ -194,6 +194,7 @@ class CPU {
         int interrupt_NMI();
         uint8_t memory[65536];
         uint8_t read(uint16_t address) const;
+        uint8_t safe_read(uint16_t address) const;
 
         //Setters/getters for cpu variables -- mostly used for testing/debugging
         void set_PC(uint16_t pc);

@@ -124,7 +124,7 @@ PPU::PPU() {
     // Set MMIO registers
     ppuctrl = 0;
     ppumask = 0;
-    ppustatus = 0xFF;
+    ppustatus = 0;
     oamaddr = 0;
     oamdata = 0;
     ppuscroll = 0;
@@ -164,7 +164,7 @@ void PPU::set_ppuctrl(uint16_t value) {
     
     uint8_t old_nmi = ppuctrl & 0x80;
     uint8_t new_nmi = value & 0x80;
-    if (old_nmi == 0 && new_nmi != old_nmi) nmi_trigger = true;
+    if (old_nmi == 0 && new_nmi == 0x80 && (ppustatus & 0x80) == 0x80) nmi_trigger = true;
     ppuctrl = value;
     t = (t & 0x73FF) | ((value & 3) << 10);
 
@@ -367,7 +367,7 @@ void PPU::tick() {
     else if (scanline == 241) {
         if (dot == 1) {
             ppustatus |= 0x80;
-            nmi_trigger = true;
+            nmi_trigger = (ppuctrl & 0x80) == 1;
         }
     }
     // VBlank - the PPU essentially does nothing until it reaches scanline 261
